@@ -1,0 +1,180 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Scenario Information{% endblock %}
+
+{% block content %}
+<div class="instructions-container">
+    <h3>Symbol-to-Scenario Mapping</h3>
+    <p class="lead">
+        Throughout the experiment, the symbol that appears more frequently in the grid indicates which scenario is active for that round.
+    </p>
+    
+    <div class="scenario-mapping">
+        <div class="scenario-card">
+            <div class="scenario-header">
+                <span class="symbol-large">{{ moral_symbol }}</span>
+            </div>
+            <div class="payoff-table-container">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Your Payoff</th>
+                            <th>Charity Payoff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>A</strong></td>
+                            <td>{{ payoffs.moral_conflict.A.player }}</td>
+                            <td>{{ payoffs.moral_conflict.A.charity }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B</strong></td>
+                            <td>{{ payoffs.moral_conflict.B.player }}</td>
+                            <td>{{ payoffs.moral_conflict.B.charity }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="scenario-card">
+            <div class="scenario-header">
+                <span class="symbol-large">{{ win_symbol }}</span>
+            </div>
+            <div class="payoff-table-container">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Your Payoff</th>
+                            <th>Charity Payoff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>A</strong></td>
+                            <td>{{ payoffs.win_win.A.player }}</td>
+                            <td>{{ payoffs.win_win.A.charity }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B</strong></td>
+                            <td>{{ payoffs.win_win.B.player }}</td>
+                            <td>{{ payoffs.win_win.B.charity }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <strong>Important:</strong> This mapping remains constant throughout the entire experiment. Once you learn whether {{ moral_symbol }} or {{ win_symbol }} indicates each scenario, that relationship does not change.
+    </div>
+</div>
+
+<style>
+.instructions-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.instructions-container h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.lead {
+    color: #555;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.scenario-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.scenario-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    transition: border-color 0.3s ease;
+}
+
+.scenario-card:hover {
+    border-color: #3498db;
+}
+
+.scenario-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.symbol-large {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.scenario-card h4 {
+    color: #34495e;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.payoff-table-container {
+    margin-top: 1rem;
+}
+
+.payoff-table-container table {
+    margin-bottom: 0;
+    background-color: white;
+}
+
+.payoff-table-container thead {
+    background-color: #f8f9fa;
+}
+
+.payoff-table-container th {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+}
+
+.payoff-table-container td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    border-left: 4px solid #17a2b8;
+}
+
+.alert strong {
+    color: #0c5460;
+}
+
+@media (max-width: 768px) {
+    .scenario-mapping {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+</style>
+
+{% next_button %}
+{% endblock %}

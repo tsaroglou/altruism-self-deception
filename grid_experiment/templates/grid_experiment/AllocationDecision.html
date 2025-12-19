@@ -1,0 +1,245 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Choose an Action{% endblock %}
+
+{% block content %}
+<div class="decision-container">
+    <div class="instructions-box">
+        <p class="lead">
+            Based on your identification of the grid, choose between <strong>Action A</strong> or <strong>Action B</strong>.
+        </p>
+        <p>
+            Your choice will determine the payoffs for both yourself and the charity, depending on which scenario is actually active this round.
+        </p>
+    </div>
+
+    <div class="scenario-action-container">
+        <div class="scenario-display-box">
+            <div class="scenario-header">
+                <span class="scenario-symbol-large">{{ chosen_scenario_symbol }}</span>
+                <div class="scenario-title">{{ chosen_scenario_label }}</div>
+            </div>
+        </div>
+        
+        <div class="actions-vertical">
+            <label class="action-button-label">
+                <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
+                <div class="action-button-content">
+                    <span class="action-name">Action A</span>
+                    <div class="payoff-info">
+                        <div class="payoff-line">
+                            <span class="payoff-label">You:</span>
+                            <span class="payoff-amount">{{ chosen_payoffs.A.player }}</span>
+                        </div>
+                        <div class="payoff-line">
+                            <span class="payoff-label">Charity:</span>
+                            <span class="payoff-amount">{{ chosen_payoffs.A.charity }}</span>
+                        </div>
+                    </div>
+                </div>
+            </label>
+            
+            <label class="action-button-label">
+                <input type="radio" name="action_choice" value="B" id="id_action_choice_1" required>
+                <div class="action-button-content">
+                    <span class="action-name">Action B</span>
+                    <div class="payoff-info">
+                        <div class="payoff-line">
+                            <span class="payoff-label">You:</span>
+                            <span class="payoff-amount">{{ chosen_payoffs.B.player }}</span>
+                        </div>
+                        <div class="payoff-line">
+                            <span class="payoff-label">Charity:</span>
+                            <span class="payoff-amount">{{ chosen_payoffs.B.charity }}</span>
+                        </div>
+                    </div>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
+
+<style>
+.decision-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.instructions-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 6px;
+}
+
+.instructions-box .lead {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.instructions-box p:last-child {
+    margin-bottom: 0;
+    color: #555;
+}
+
+.scenario-action-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.scenario-display-box {
+    flex: 0 0 auto;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+}
+
+.scenario-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.scenario-symbol-large {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.scenario-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.actions-vertical {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 250px;
+}
+
+.action-button-label {
+    display: block;
+    background-color: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.action-button-label:hover {
+    background-color: #f8f9fa;
+    border-color: #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-button-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.action-button-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.action-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payoff-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.action-button-label.checked {
+    background-color: #e7f3ff;
+    border-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+}
+
+.action-button-label.checked .action-name {
+    color: #3498db;
+}
+
+@media (max-width: 768px) {
+    .scenario-action-container {
+        flex-direction: column;
+    }
+    
+    .scenario-display-box {
+        width: 100%;
+    }
+    
+    .actions-vertical {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+(function() {
+    // Handle radio button styling
+    const radioLabels = document.querySelectorAll('.action-button-label');
+    radioLabels.forEach(function(label) {
+        const radio = label.querySelector('input[type="radio"]');
+        if (radio && radio.checked) {
+            label.classList.add('checked');
+        }
+        if (radio) {
+            radio.addEventListener('change', function() {
+                // Remove checked class from all labels
+                radioLabels.forEach(function(l) {
+                    l.classList.remove('checked');
+                });
+                // Add checked class to the selected label
+                if (this.checked) {
+                    this.closest('.action-button-label').classList.add('checked');
+                }
+            });
+        }
+    });
+})();
+</script>
+
+{% next_button %}
+{% endblock %}

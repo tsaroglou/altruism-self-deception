@@ -1,0 +1,117 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h2>Welcome to the Experiment</h2>
+    
+    <div class="instructions-section">
+        <h4>Task Overview</h4>
+        <p>
+            In this study, you will complete a series of rounds of a perceptual identification task. 
+            Each round follows the same sequence:
+        </p>
+        <ol class="task-steps">
+            <li><strong>View the grid:</strong> A {{ grid_size }} grid filled with symbols X and O will be displayed for <strong>{{ display_seconds }} seconds</strong>.</li>
+            <li><strong>Identify the scenario:</strong> Report which symbol appeared more frequently. Correct identification earns you <strong>{{ identification_bonus }}</strong>.</li>
+            <li><strong>Choose an action:</strong> Select between Action A or Action B. Your payoff depends on which scenario is active.</li>
+        </ol>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Viewing Options</h4>
+        <p>
+            Before submitting your identification, you may request to view the grid again.
+            {% if view_again_cost > 0 %}
+                <strong>Each additional viewing costs {{ view_again_cost }}.</strong>
+            {% else %}
+                Additional viewings are free, but the number of requests will be recorded.
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Scenarios</h4>
+        <p>
+            There are two possible scenarios that determine the payoffs: <strong>{{ scenario_label_moral }}</strong> and <strong>{{ scenario_label_win }}</strong>. 
+            The symbol that appears more frequently in the grid indicates which scenario is active for that round.
+        </p>
+        <p>
+            On the next page, you will learn which symbol corresponds to which scenario, along with the payoff structure for each scenario.
+        </p>
+    </div>
+
+    <div class="alert alert-primary">
+        <strong>Please work carefully</strong> and make the best decisions you can on each round. Your decisions affect both your own payoff and that of a charity.
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.welcome-container h2 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+}
+
+.instructions-section h4 {
+    color: #34495e;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.instructions-section p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.instructions-section p:last-child {
+    margin-bottom: 0;
+}
+
+.task-steps {
+    margin-left: 1.5rem;
+    color: #555;
+}
+
+.task-steps li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.alert {
+    padding: 1.25rem 1.5rem;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+    background-color: #e7f3ff;
+    margin-top: 2rem;
+}
+
+.alert strong {
+    color: #2c3e50;
+}
+
+</style>
+
+{% next_button %}
+{% endblock %}

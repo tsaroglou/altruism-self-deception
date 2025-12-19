@@ -1,0 +1,364 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Round Summary{% endblock %}
+
+{% block content %}
+<div class="summary-container">
+    <div class="summary-card">
+        <h3>Results</h3>
+        
+        <div class="summary-section">
+            <div class="summary-item">
+                <span class="summary-label">Active Scenario:</span>
+                <span class="summary-value highlight">{{ actual_scenario_label }}</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Your Choice:</span>
+                <span class="summary-value">Action {{ action_choice }}</span>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <h5>Identification Result</h5>
+            <div class="scenarios-display">
+                <div class="scenario-result {% if x_was_chosen %}{% if x_was_correct %}correct{% else %}incorrect{% endif %}{% endif %}">
+                    <div class="scenario-header-result">
+                        <span class="scenario-symbol-result">X</span>
+                        <span class="scenario-label-result">{{ scenario_label_x }}</span>
+                    </div>
+                    {% if x_was_chosen %}
+                    <div class="result-indicator">
+                        {% if x_was_correct %}
+                            <span class="icon-check">✓</span>
+                        {% else %}
+                            <span class="icon-cross">✗</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="scenario-result {% if o_was_chosen %}{% if o_was_correct %}correct{% else %}incorrect{% endif %}{% endif %}">
+                    <div class="scenario-header-result">
+                        <span class="scenario-symbol-result">O</span>
+                        <span class="scenario-label-result">{{ scenario_label_o }}</span>
+                    </div>
+                    {% if o_was_chosen %}
+                    <div class="result-indicator">
+                        {% if o_was_correct %}
+                            <span class="icon-check">✓</span>
+                        {% else %}
+                            <span class="icon-cross">✗</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bonus-summary">
+                {% if identification_correct %}
+                    <div class="bonus-info">
+                        Net bonus: <strong>+{{ net_identification_bonus }}</strong>
+                        {% if view_again_cost > 0 %}
+                            <span class="cost-detail">({{ identification_bonus }} before cost)</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="bonus-info">Bonus: +0</div>
+                {% endif %}
+            </div>
+            
+            {% if view_again_cost > 0 and view_again_count > 0 %}
+            <div class="cost-box">
+                <strong>View Again Cost:</strong> −{{ view_again_cost }}
+                <span class="cost-detail">({{ view_again_count }} {{ view_again_label }}, {{ view_again_unit_cost }} each)</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="summary-section">
+            <h5>Payoffs</h5>
+            <div class="payoff-display">
+                <div class="payoff-item">
+                    <span class="payoff-label">Charity receives:</span>
+                    <span class="payoff-amount charity">{{ charity_payoff }}</span>
+                </div>
+                <div class="payoff-item total">
+                    <span class="payoff-label">Your payoff this round:</span>
+                    <span class="payoff-amount total-amount">{{ player_payoff }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if player.round_number == total_rounds %}
+        <div class="completion-box">
+            <span class="icon">✓</span>
+            <div>
+                <strong>Experiment Complete!</strong>
+                <p>Thank you for your participation.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.summary-container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.summary-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.summary-section {
+    margin-bottom: 2rem;
+}
+
+.summary-section:last-child {
+    margin-bottom: 0;
+}
+
+.summary-section h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: white;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.summary-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.summary-value {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.summary-value.highlight {
+    color: #3498db;
+    font-size: 1.1rem;
+}
+
+.result-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.result-box.success {
+    background-color: #d4edda;
+    border: 2px solid #28a745;
+    color: #155724;
+}
+
+.result-box.error {
+    background-color: #f8d7da;
+    border: 2px solid #dc3545;
+    color: #721c24;
+}
+
+.result-box .icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.result-box strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.bonus-info {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.cost-detail {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 0.5rem;
+}
+
+.cost-box {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    color: #856404;
+    font-size: 0.95rem;
+}
+
+.payoff-display {
+    background-color: white;
+    border-radius: 6px;
+    padding: 1.25rem;
+    border: 2px solid #dee2e6;
+}
+
+.payoff-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.payoff-item:last-child {
+    border-bottom: none;
+}
+
+.payoff-item.total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid #dee2e6;
+    border-bottom: none;
+}
+
+.payoff-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.payoff-amount {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.payoff-amount.charity {
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.payoff-amount.total-amount {
+    color: #3498db;
+    font-size: 1.1rem;
+}
+
+.scenarios-display {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.scenario-result {
+    flex: 1;
+    min-width: 200px;
+    padding: 1rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.scenario-result.correct {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.scenario-result.incorrect {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.scenario-header-result {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.scenario-symbol-result {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.scenario-label-result {
+    font-weight: 600;
+}
+
+.result-indicator {
+    font-size: 2rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.icon-check {
+    color: #28a745;
+}
+
+.icon-cross {
+    color: #dc3545;
+}
+
+.bonus-summary {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: white;
+    border-radius: 4px;
+}
+
+.completion-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.completion-box .icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    font-weight: bold;
+}
+
+.completion-box strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.completion-box p {
+    margin: 0;
+    opacity: 0.95;
+}
+</style>
+{% next_button %}
+{% endblock %}
