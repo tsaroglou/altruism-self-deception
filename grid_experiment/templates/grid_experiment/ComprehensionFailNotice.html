@@ -1,0 +1,57 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Comprehension Check{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h2>Comprehension Check</h2>
+
+    <div class="instructions-section">
+        <p>
+            One or more of your answers in the comprehension check was not correct.
+            You will now have one more chance to answer a similar set of questions.
+        </p>
+        <p>
+            Please read the instructions carefully and make sure you understand how the true active scenario is
+            determined and how points for you and the charity are calculated.
+        </p>
+        <p>
+            If you do not answer all questions correctly on the next check, you will not play the main part of
+            the task and will instead receive the participation payment plus 5 euros.
+        </p>
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.welcome-container h2 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+}
+
+.instructions-section p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+</style>
+
+{% next_button %}
+{% endblock %}
+

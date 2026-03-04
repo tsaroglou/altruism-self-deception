@@ -1,0 +1,48 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+
+{% block content %}
+<div class="noconsent-container">
+    <h2>No Consent</h2>
+
+    <p class="noconsent-message">
+        You have chosen not to participate in this study.
+    </p>
+
+    <p class="noconsent-text">
+        Thank you for your time.
+    </p>
+
+    <p class="noconsent-text">
+        You may now close this window.
+    </p>
+</div>
+
+<style>
+.noconsent-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+}
+
+.noconsent-container h2 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.noconsent-message {
+    color: #dc3545;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.noconsent-text {
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+{% endblock %}
+

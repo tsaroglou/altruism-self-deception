@@ -1,0 +1,112 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+
+{% block content %}
+<div class="welcome-container">
+    <h2>Instructions</h2>
+
+    <div class="instructions-section">
+        <p>
+        <p>
+            On each round, your task is simply to indicate <strong>which symbol appeared
+            more often</strong> in a grid: X or O.
+        </p>
+        <p>
+            There are {{ total_rounds }} such rounds in total. After each grid, you will
+            be asked whether you saw more X or more O symbols.
+        </p>
+    </div>
+
+    <div class="instructions-section">
+        <p>
+            Each grid is a 7 × 7 square (49 positions) filled with X and O symbols.
+            Here is an example of what a grid might look like:
+        </p>
+        <div class="example-grid">
+            <div class="symbol-grid example-symbol-grid">
+                {% for row in "XXXXOXO" "XOXOXOX" "OOXXXOX" "XXOXOOX" "OXOXXXO" "XOOXOXX" "XOXXOOX" %}
+                    {% for ch in row %}
+                        <div class="cell">{{ ch }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+        <p>
+            <br>
+            On each round, you will first see a <strong>fixation cross</strong> in the center of
+            the screen for <strong>3 seconds</strong>. Immediately after that, the grid
+            will appear for <strong>2 seconds</strong> before disappearing.
+        </p>
+        <p>
+            After the grid disappears, you will be asked to report whether there were more
+            Xs or more Os.
+        </p>
+        <p>
+            Please try to respond as accurately as you can. When you are ready to start,
+            click the button below.
+        </p>
+    </div>
+
+    <div class="next-button-wrapper">
+        {% next_button %}
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.instructions-section h4 {
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.instructions-section p {
+    margin-bottom: 0.75rem;
+    color: #444;
+}
+
+.example-grid {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.symbol-grid.example-symbol-grid {
+    display: inline-grid;
+    grid-template-columns: repeat(7, 2.2rem);
+    gap: 0.25rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    justify-content: center;
+}
+
+.symbol-grid.example-symbol-grid .cell {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #bdc3c7;
+    background-color: #ffffff;
+    border-radius: 3px;
+}
+
+.next-button-wrapper {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+</style>
+{% endblock %}
+

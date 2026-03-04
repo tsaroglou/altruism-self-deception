@@ -1,50 +1,295 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}Instructions{% endblock %}
 
 {% block content %}
 <div class="welcome-container">
-    <h2>Welcome to the Experiment</h2>
-    
+    <h2>Instructions</h2>
+
     <div class="instructions-section">
-        <h4>Task Overview</h4>
+        <h4>Structure of the experiment</h4>
         <p>
-            In this study, you will complete a series of rounds of a perceptual identification task. 
-            Each round follows the same sequence:
+            This experiment consists of three parts:
         </p>
         <ol class="task-steps">
-            <li><strong>View the grid:</strong> A {{ grid_size }} grid filled with symbols X and O will be displayed for <strong>{{ display_seconds }} seconds</strong>.</li>
-            <li><strong>Identify the scenario:</strong> Report which symbol appeared more frequently. Correct identification earns you <strong>{{ identification_bonus }}</strong>.</li>
-            <li><strong>Choose an action:</strong> Select between Action A or Action B. Your payoff depends on which scenario is active.</li>
+            <li><strong>Instructions, practice, and questions of understanding</strong> — You will read the instructions, complete a practice round, and answer a few questions to check your understanding.</li>
+            <li><strong>Main Task rounds</strong> — You will complete 24 rounds of the task. </li>
+            <li><strong>Questionnaire</strong> — At the end, you will answer a short questionnaire.</li>
         </ol>
-    </div>
-
-    <div class="instructions-section">
-        <h4>Viewing Options</h4>
         <p>
-            Before submitting your identification, you may request to view the grid again.
-            {% if view_again_cost > 0 %}
-                <strong>Each additional viewing costs {{ view_again_cost }}.</strong>
-            {% else %}
-                Additional viewings are free, but the number of requests will be recorded.
-            {% endif %}
+            <strong>Payment:</strong> One round from the Main Task will be chosen at random at the end of the experiment. Your total earnings from that round will be paid out.
         </p>
     </div>
 
     <div class="instructions-section">
-        <h4>Scenarios</h4>
+        <h4>The two scenarios and your choices</h4>
         <p>
-            There are two possible scenarios that determine the payoffs: <strong>{{ scenario_label_moral }}</strong> and <strong>{{ scenario_label_win }}</strong>. 
-            The symbol that appears more frequently in the grid indicates which scenario is active for that round.
+            In the Main Task, each round takes place in one of two scenarios. In every round, you will choose between
+            <strong>Action A</strong> and <strong>Action B</strong>, and these choices determine how many points you and the charity receive.
         </p>
         <p>
-            On the next page, you will learn which symbol corresponds to which scenario, along with the payoff structure for each scenario.
+            The tables below show the points for you and the charity in each scenario:
+        </p>
+        <div class="scenario-mapping">
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario X</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario O</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p>
+            For example, in Scenario X, if you choose <strong>Action A</strong>, you and the charity receive the points shown in the first row.
+            If you choose <strong>Action B</strong>, you and the charity receive the points shown in the second row. The same logic applies in Scenario O.
+        </p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>The charity: GiveDirectly</h4>
+        <p>
+            In this experiment, the charity that can receive points from your choices is <strong>GiveDirectly</strong>.
+        </p>
+        <button type="button" class="btn btn-outline-primary" id="give-directly-btn">
+            Learn more about GiveDirectly
+        </button>
+        <div id="give-directly-modal" class="gd-modal" hidden>
+            <div class="gd-modal-content">
+                <button type="button" class="gd-close" id="give-directly-close">&times;</button>
+                <h5>What is GiveDirectly?</h5>
+                <p><em>This is how they describe themselves:</em></p>
+                <p>
+                    GiveDirectly is a nonprofit that lets donors like you send money directly to the world’s poorest
+                    households. We believe people living in poverty deserve the dignity to choose for themselves
+                    how best to improve their lives — cash enables that choice.
+                </p>
+                <p>
+                    Research finds people use cash in impactful and creative ways.
+                    We read the research. We read more research. Then we did our research. And it turns out,
+                    that people use cash on medicine; cows and goats and chickens; school fees; water; solar lights;
+                    tin roofs; irrigation; motorcycles to jumpstart taxi services; businesses to generate income; and
+                    more.
+                </p>
+                <p>
+                    If you think about it, doesn’t giving directly make sense? Cash allows individuals to invest in
+                    what they need, instead of relying on aid organizations and donors thousands of miles away to
+                    choose for them. Isn’t this what you would prefer?
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Questions to check your understanding</h4>
+        <p>
+            Based on the tables above, please answer the following questions. Your answers here do not affect your
+            earnings; they are just to help you understand the task.
+        </p>
+        <div class="comprehension-question">
+            <div class="question-text">
+                1. In <strong>Scenario X</strong>, if you choose <strong>Action B</strong>, how many points does the <strong>charity</strong> receive?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    {{ payoffs_x.B.charity }}
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    {{ payoffs_x.A.charity }}
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    {{ payoffs_o.B.charity }}
+                </button>
+            </div>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                2. In <strong>Scenario O</strong>, if you want to give the charity <strong>more</strong> points (compared to the other action),
+                which action should you choose?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    Action {% if payoffs_o.B.charity > payoffs_o.A.charity %}B{% else %}A{% endif %}
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    Action {% if payoffs_o.B.charity > payoffs_o.A.charity %}A{% else %}B{% endif %}
+                </button>
+            </div>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                3. In <strong>Scenario X</strong>, if you want to give <strong>yourself</strong> more points (compared to the other action),
+                which action should you choose?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    Action {% if payoffs_x.B.player > payoffs_x.A.player %}B{% else %}A{% endif %}
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    Action {% if payoffs_x.B.player > payoffs_x.A.player %}A{% else %}B{% endif %}
+                </button>
+            </div>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                4. In <strong>Scenario O</strong>, if you choose the action that gives <strong>you</strong> more points, what happens to the
+                points for the <strong>charity</strong> compared to the other action?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    The charity receives {% if payoffs_o.B.player > payoffs_o.A.player %}
+                        {% if payoffs_o.B.charity > payoffs_o.A.charity %}more{% elif payoffs_o.B.charity < payoffs_o.A.charity %}fewer{% else %}the same number of{% endif %}
+                    {% else %}
+                        {% if payoffs_o.A.charity > payoffs_o.B.charity %}more{% elif payoffs_o.A.charity < payoffs_o.B.charity %}fewer{% else %}the same number of{% endif %}
+                    {% endif %} points.
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    The charity always receives the same number of points, regardless of your action.
+                </button>
+            </div>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                5. In <strong>Scenario X</strong>, which action is <strong>better for the charity</strong> (gives the charity more points)?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    Action {% if payoffs_x.B.charity > payoffs_x.A.charity %}B{% else %}A{% endif %}
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    Action {% if payoffs_x.B.charity > payoffs_x.A.charity %}A{% else %}B{% endif %}
+                </button>
+            </div>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                6. Suppose the <strong>true active scenario</strong> is Scenario X, but you mistakenly report Scenario O.
+                Which scenario is used to calculate your and the charity's points?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    The true active scenario (Scenario X).
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    The scenario you reported (Scenario O).
+                </button>
+            </div>
+        </div>
+        <p class="comprehension-feedback" id="comprehension-feedback"></p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Identifying which scenario is active</h4>
+        <p>
+            Before you choose between Actions A and B, you will briefly see a grid filled with X and O symbols.
+            The symbol that appears more often in the grid determines which scenario (X or O) is active in that round.
+        </p>
+        <p>
+            You will then report which symbol you think appeared more frequently. If you are correct, you earn
+            an identification bonus of <strong>{{ identification_bonus }}</strong>.
+        </p>
+        <div class="example-grid">
+            <div class="example-grid-title">Example grid (for illustration only)</div>
+            <div class="symbol-grid example-symbol-grid">
+                <div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">O</div>
+                <div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div>
+                <div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">O</div>
+                <div class="cell">O</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div>
+                <div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">O</div>
+                <div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div>
+                <div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div><div class="cell">O</div><div class="cell">X</div><div class="cell">X</div>
+            </div>
+        </div>
+        <p>
+            Even if you report the wrong symbol, the <strong>true active scenario</strong> is still determined by the
+            symbol that actually appeared more often in the grid. Your earnings and the charity’s points are always
+            calculated using this true active scenario.
+        </p>
+    </div>
+
+
+    <div class="instructions-section">
+        <h4>Practice rounds and Main Task</h4>
+        <p>
+            First, you will play <strong>5 practice rounds</strong>. These rounds include the feedback screen after each
+            round so that you can become familiar with the task, the scenarios, and the round summary.
+        </p>
+        <p>
+            After the practice, you will play <strong>48 Main Task rounds</strong> (for payment). In these rounds, you will
+            not see the round summary after every single round, but your points are always calculated in the same
+            way as described above.
         </p>
     </div>
 
     <div class="alert alert-primary">
-        <strong>Please work carefully</strong> and make the best decisions you can on each round. Your decisions affect both your own payoff and that of a charity.
+        <strong>Please work carefully.</strong> Your decisions affect both your own payoff and the amount donated to the charity.
     </div>
 </div>
 
@@ -89,6 +334,213 @@
     margin-bottom: 0;
 }
 
+.scenario-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 1.5rem 0 1rem;
+}
+
+.scenario-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.scenario-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.scenario-header-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.scenario-option {
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.scenario-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.action-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payoff-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.gd-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.gd-modal-content {
+    background: #ffffff;
+    max-width: 600px;
+    width: 100%;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.gd-close {
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    float: right;
+    cursor: pointer;
+}
+
+.comprehension-question {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.question-text {
+    margin-bottom: 0.5rem;
+}
+
+.question-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.comprehension-option {
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.comprehension-option.correct {
+    border-color: #28a745;
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.comprehension-option.incorrect {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.comprehension-feedback {
+    margin-top: 0.75rem;
+    font-weight: 500;
+}
+
+.example-grid {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.example-grid-title {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.symbol-grid.example-symbol-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 2.6rem);
+    gap: 0.25rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    justify-content: center;
+}
+
+.symbol-grid.example-symbol-grid .cell {
+    width: 2.6rem;
+    height: 2.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #bdc3c7;
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+.summary-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.summary-examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.summary-example-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+}
+
+.summary-example-card .summary-card {
+    font-size: 0.9rem;
+}
+
 .task-steps {
     margin-left: 1.5rem;
     color: #555;
@@ -111,7 +563,62 @@
     color: #2c3e50;
 }
 
+@media (max-width: 768px) {
+    .scenario-mapping {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-examples {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style>
+
+<script>
+(function() {
+    const modal = document.getElementById('give-directly-modal');
+    const openBtn = document.getElementById('give-directly-btn');
+    const closeBtn = document.getElementById('give-directly-close');
+
+    if (openBtn && modal) {
+        openBtn.addEventListener('click', function() {
+            modal.hidden = false;
+        });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', function() {
+            modal.hidden = true;
+        });
+    }
+    if (modal) {
+        modal.addEventListener('click', function(ev) {
+            if (ev.target === modal) {
+                modal.hidden = true;
+            }
+        });
+    }
+
+    const options = document.querySelectorAll('.comprehension-option');
+    const feedbackEl = document.getElementById('comprehension-feedback');
+    options.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const isCorrect = this.dataset.correct === 'true';
+            this.classList.remove('correct', 'incorrect');
+            this.classList.add(isCorrect ? 'correct' : 'incorrect');
+            if (feedbackEl) {
+                if (isCorrect) {
+                    feedbackEl.textContent = 'Correct! This matches the payoff table above.';
+                    feedbackEl.style.color = '#155724';
+                } else {
+                    feedbackEl.textContent = 'That is not correct. Please check the payoff table above and try again.';
+                    feedbackEl.style.color = '#721c24';
+                }
+            }
+        });
+    });
+})();
+</script>
 
 {% next_button %}
 {% endblock %}

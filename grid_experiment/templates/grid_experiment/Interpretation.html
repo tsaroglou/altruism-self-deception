@@ -5,79 +5,228 @@
 
 {% block content %}
 <div class="interpretation-container">
-    <div class="reminder-box">
-        <strong>Remember:</strong> <span class="symbol-highlight">{{ moral_symbol }}</span> indicates <strong>{{ scenario_label_moral }}</strong>, 
-        and <span class="symbol-highlight">{{ win_symbol }}</span> indicates <strong>{{ scenario_label_win }}</strong>.
-    </div>
-
-    <div class="view-controls">
-        <button id="view-again-btn" type="button" class="btn btn-outline-primary">
-            View Grid Again
-        </button>
-        {% if view_again_cost > 0 %}
-            <span class="cost-badge">
-                Cost: {{ view_again_cost }} per viewing
-            </span>
-        {% endif %}
-        <span id="view-count-note" class="count-note"></span>
-    </div>
-
-    <div id="grid-overlay" class="grid-overlay" hidden>
-        <div class="overlay-header">Grid Preview (2 seconds)</div>
-        <div class="symbol-grid" data-grid-cols="{{ grid_cols }}">
-            {% for row in grid_rows %}
-                {% for cell in row %}
-                    <div class="cell">{{ cell }}</div>
-                {% endfor %}
-            {% endfor %}
-        </div>
-    </div>
-
     <div class="form-section">
-        <h4>Which symbol appeared more frequently?</h4>
-        <div class="radio-buttons-group">
-            <label class="radio-button-label">
-                <input type="radio" name="reported_symbol" value="X" id="id_reported_symbol_0" required>
-                <span class="radio-button-text">
-                    <span class="symbol-display">X</span>
+        <h4>Which scenario's symbol appeared more frequently?</h4>
+        <p class="form-subtitle">Click on the corresponding scenario.</p>
+    </div>
+
+    <div class="scenario-mapping">
+        <label class="scenario-card-label">
+            <input type="radio" name="reported_symbol" value="X" required>
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario X</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </label>
+        <label class="scenario-card-label">
+            <input type="radio" name="reported_symbol" value="O" required>
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario O</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </label>
+
+    <div class="view-again-hidden" style="display:none;">
+        <div class="view-controls">
+            <button id="view-again-btn" type="button" class="btn btn-outline-primary">
+                View Grid Again
+            </button>
+            {% if view_again_cost > 0 %}
+                <span class="cost-badge">
+                    Cost: {{ view_again_cost }} per viewing
                 </span>
-            </label>
-            <label class="radio-button-label">
-                <input type="radio" name="reported_symbol" value="O" id="id_reported_symbol_1" required>
-                <span class="radio-button-text">
-                    <span class="symbol-display">O</span>
-                </span>
-            </label>
+            {% endif %}
+            <span id="view-count-note" class="count-note"></span>
+        </div>
+        <div id="grid-overlay" class="grid-overlay" hidden>
+            <div class="overlay-header">Grid Preview (2 seconds)</div>
+            <div class="symbol-grid" data-grid-cols="{{ grid_cols }}">
+                {% for row in grid_rows %}
+                    {% for cell in row %}
+                        <div class="cell">{{ cell }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 
     <div style="display:none;">
         {{ formfield 'view_again_count' }}
-        {{ formfield 'reaction_time' }}
+        {{ formfield 'reported_symbol_rt' }}
     </div>
 </div>
 
 <style>
 .interpretation-container {
-    max-width: 700px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
-.reminder-box {
-    background-color: #e7f3ff;
-    border: 2px solid #3498db;
-    border-radius: 6px;
-    padding: 1rem 1.5rem;
+.scenario-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
     margin-bottom: 2rem;
+}
+
+.scenario-card-label {
+    display: block;
+    cursor: pointer;
+}
+
+.scenario-card-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.scenario-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.scenario-card:hover {
+    background-color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: scale(1.03);
+}
+
+.scenario-card-label input[type="radio"]:checked + .scenario-card {
+    background-color: #e7f3ff;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+.scenario-card .scenario-header {
     text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.scenario-card .scenario-header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #2c3e50;
 }
 
-.symbol-highlight {
-    font-size: 1.5rem;
-    font-weight: 700;
+.scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.scenario-option {
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.scenario-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-name {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #2c3e50;
-    padding: 0 0.25rem;
+}
+
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payoff-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
 }
 
 .view-controls {
@@ -155,10 +304,18 @@
 
 .form-section h4 {
     color: #2c3e50;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
     font-size: 1.1rem;
     text-align: center;
+}
+
+.form-subtitle {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #6c757d;
+    font-size: 0.95rem;
 }
 
 .form-section .form-group {
@@ -170,77 +327,13 @@
     color: #495057;
 }
 
-.radio-buttons-group {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
-}
+/* old symbol radio button styles removed */
 
-.radio-button-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #2c3e50;
-    background-color: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 100px;
-    user-select: none;
-}
-
-.radio-button-label:hover {
-    background-color: #f8f9fa;
-    border-color: #3498db;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.radio-button-label input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.radio-button-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.symbol-display {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.scenario-display {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #6c757d;
-    text-align: center;
-}
-
-.radio-button-label input[type="radio"]:checked + .radio-button-text {
-    color: #3498db;
-}
-
-.radio-button-label.checked {
-    background-color: #e7f3ff;
-    border-color: #3498db;
-    color: #3498db;
-    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
-}
-
-.radio-button-label.checked .radio-button-text {
-    color: #3498db;
+@media (max-width: 768px) {
+    .scenario-mapping {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -265,9 +358,9 @@
             document.getElementById('id_player-view_again_count') ||
             document.querySelector('[name="view_again_count"]');
         const reactionInput =
-            document.getElementById('id_reaction_time') ||
-            document.getElementById('id_player-reaction_time') ||
-            document.querySelector('[name="reaction_time"]');
+            document.getElementById('id_reported_symbol_rt') ||
+            document.getElementById('id_player-reported_symbol_rt') ||
+            document.querySelector('[name="reported_symbol_rt"]');
         const viewCountNote = document.getElementById('view-count-note');
         const revealMillis = 2000;
         let viewCount = 0;
@@ -332,27 +425,6 @@
 
         // ensure grid is hidden at start
         hideGrid();
-
-        // Handle radio button styling
-        const radioLabels = document.querySelectorAll('.radio-button-label');
-        radioLabels.forEach(function(label) {
-            const radio = label.querySelector('input[type="radio"]');
-            if (radio && radio.checked) {
-                label.classList.add('checked');
-            }
-            if (radio) {
-                radio.addEventListener('change', function() {
-                    // Remove checked class from all labels
-                    radioLabels.forEach(function(l) {
-                        l.classList.remove('checked');
-                    });
-                    // Add checked class to the selected label
-                    if (this.checked) {
-                        this.closest('.radio-button-label').classList.add('checked');
-                    }
-                });
-            }
-        });
     })();
 </script>
 {% next_button %}

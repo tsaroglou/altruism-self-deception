@@ -1,0 +1,77 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block content %}
+<div class="final-page">
+    <div class="final-card">
+        <h2 class="final-title">Thank you for participating</h2>
+
+        <p class="final-text">
+            You have completed all {{ total_rounds }} rounds of the X/O identification task.
+        </p>
+
+        <p class="final-text">
+            Your overall accuracy was:
+        </p>
+
+        <div class="accuracy-badge">
+            {{ accuracy_percent }}%
+        </div>
+
+    </div>
+</div>
+
+<style>
+.final-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.final-card {
+    max-width: 620px;
+    width: 100%;
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 2rem 2.5rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.final-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.final-text {
+    margin-bottom: 0.75rem;
+    color: #444;
+    font-size: 1rem;
+}
+
+.accuracy-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.25rem 0 0.75rem 0;
+    padding: 0.75rem 1.75rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #3498db, #2ecc71);
+    color: #ffffff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.final-note {
+    margin-top: 1rem;
+    font-style: italic;
+    color: #666;
+}
+</style>
+{% endblock %}
+

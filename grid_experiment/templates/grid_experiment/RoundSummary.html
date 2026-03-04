@@ -1,90 +1,125 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Round Summary{% endblock %}
 
 {% block content %}
 <div class="summary-container">
     <div class="summary-card">
-        <h3>Results</h3>
+        <h3>Round Results</h3>
         
         <div class="summary-section">
-            <div class="summary-item">
-                <span class="summary-label">Active Scenario:</span>
-                <span class="summary-value highlight">{{ actual_scenario_label }}</span>
-            </div>
-            
-            <div class="summary-item">
-                <span class="summary-label">Your Choice:</span>
-                <span class="summary-value">Action {{ action_choice }}</span>
+            <h5>True Active Scenario</h5>
+            <p class="identification-intro">
+                The blue-bordered scenario is the one whose symbol appeared most often in the grid this round.
+            </p>
+            <div class="scenario-cards-row">
+                <div class="scenario-summary-card {% if actual_scenario_symbol == 'X' %}active-scenario-card{% else %}inactive-scenario-card{% endif %}">
+                    <div class="scenario-header">
+                        <span class="scenario-header-title">Scenario X</span>
+                    </div>
+                    <div class="scenario-actions">
+                        <div class="scenario-option-summary">
+                            <span class="action-name">Action A</span>
+                            <span class="payoff-short">You: {{ payoffs_x.A.player }} / Charity: {{ payoffs_x.A.charity }}</span>
+                        </div>
+                        <div class="scenario-option-summary">
+                            <span class="action-name">Action B</span>
+                            <span class="payoff-short">You: {{ payoffs_x.B.player }} / Charity: {{ payoffs_x.B.charity }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scenario-summary-card {% if actual_scenario_symbol == 'O' %}active-scenario-card{% else %}inactive-scenario-card{% endif %}">
+                    <div class="scenario-header">
+                        <span class="scenario-header-title">Scenario O</span>
+                    </div>
+                    <div class="scenario-actions">
+                        <div class="scenario-option-summary">
+                            <span class="action-name">Action A</span>
+                            <span class="payoff-short">You: {{ payoffs_o.A.player }} / Charity: {{ payoffs_o.A.charity }}</span>
+                        </div>
+                        <div class="scenario-option-summary">
+                            <span class="action-name">Action B</span>
+                            <span class="payoff-short">You: {{ payoffs_o.B.player }} / Charity: {{ payoffs_o.B.charity }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="summary-section">
-            <h5>Identification Result</h5>
-            <div class="scenarios-display">
-                <div class="scenario-result {% if x_was_chosen %}{% if x_was_correct %}correct{% else %}incorrect{% endif %}{% endif %}">
-                    <div class="scenario-header-result">
-                        <span class="scenario-symbol-result">X</span>
-                        <span class="scenario-label-result">{{ scenario_label_x }}</span>
-                    </div>
-                    {% if x_was_chosen %}
-                    <div class="result-indicator">
-                        {% if x_was_correct %}
-                            <span class="icon-check">✓</span>
-                        {% else %}
-                            <span class="icon-cross">✗</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+            <h5>Outcome from Your Choice</h5>
+            <div class="payoff-display">
+                <div class="payoff-item">
+                    <span class="payoff-label">True active scenario:</span>
+                    <span class="payoff-amount">Scenario {{ actual_scenario_symbol }}</span>
                 </div>
-                <div class="scenario-result {% if o_was_chosen %}{% if o_was_correct %}correct{% else %}incorrect{% endif %}{% endif %}">
-                    <div class="scenario-header-result">
-                        <span class="scenario-symbol-result">O</span>
-                        <span class="scenario-label-result">{{ scenario_label_o }}</span>
-                    </div>
-                    {% if o_was_chosen %}
-                    <div class="result-indicator">
-                        {% if o_was_correct %}
-                            <span class="icon-check">✓</span>
-                        {% else %}
-                            <span class="icon-cross">✗</span>
-                        {% endif %}
-                    </div>
+                <div class="payoff-item">
+                    <span class="payoff-label">Your action:</span>
+                    <span class="payoff-amount">Action {{ action_choice }}</span>
+                </div>
+                <div class="payoff-item">
+                    <span class="payoff-label">Charity points:</span>
+                    <span class="payoff-amount charity">{{ charity_payoff }}</span>
+                </div>
+                <div class="payoff-item total">
+                    <span class="payoff-label">Your points:</span>
+                    <span class="payoff-amount total-amount">{{ base_payoff }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <h5>Identification and Bonus</h5>
+            <div class="identification-lines">
+                <div class="identification-line">
+                    <span class="identification-label">Your identification:</span>
+                    <span class="identification-value">Scenario {{ reported_symbol }}</span>
+                </div>
+                <div class="identification-line">
+                    <span class="identification-label">Correct identification:</span>
+                    <span class="identification-value">Scenario {{ actual_scenario_symbol }}</span>
+                </div>
+                <div class="identification-verdict {% if identification_correct %}correct{% else %}incorrect{% endif %}">
+                    {% if identification_correct %}
+                        Your identification was <strong>correct</strong>.
+                    {% else %}
+                        Your identification was <strong>incorrect</strong>.
                     {% endif %}
                 </div>
             </div>
-            
             <div class="bonus-summary">
                 {% if identification_correct %}
                     <div class="bonus-info">
-                        Net bonus: <strong>+{{ net_identification_bonus }}</strong>
+                        You received the identification bonus (<strong>+{{ identification_bonus }}</strong>).
                         {% if view_again_cost > 0 %}
-                            <span class="cost-detail">({{ identification_bonus }} before cost)</span>
+                            After subtracting the viewing cost of {{ view_again_cost }}, your net bonus this round is
+                            <strong>{{ net_identification_bonus }}</strong>.
                         {% endif %}
                     </div>
                 {% else %}
-                    <div class="bonus-info">Bonus: +0</div>
+                    <div class="bonus-info">You did not receive the identification bonus this round.</div>
                 {% endif %}
             </div>
             
+            <div class="view-again-hidden" style="display:none;">
             {% if view_again_cost > 0 and view_again_count > 0 %}
             <div class="cost-box">
                 <strong>View Again Cost:</strong> −{{ view_again_cost }}
                 <span class="cost-detail">({{ view_again_count }} {{ view_again_label }}, {{ view_again_unit_cost }} each)</span>
             </div>
             {% endif %}
+            </div>
         </div>
 
         <div class="summary-section">
-            <h5>Payoffs</h5>
+            <h5>Total Payoffs This Round</h5>
             <div class="payoff-display">
                 <div class="payoff-item">
-                    <span class="payoff-label">Charity receives:</span>
+                    <span class="payoff-label">Charity's total payoff this round:</span>
                     <span class="payoff-amount charity">{{ charity_payoff }}</span>
                 </div>
                 <div class="payoff-item total">
-                    <span class="payoff-label">Your payoff this round:</span>
+                    <span class="payoff-label">Your total payoff this round (including identification bonus):</span>
                     <span class="payoff-amount total-amount">{{ player_payoff }}</span>
                 </div>
             </div>
@@ -272,57 +307,113 @@
     flex-wrap: wrap;
 }
 
-.scenario-result {
-    flex: 1;
-    min-width: 200px;
-    padding: 1rem;
-    border-radius: 6px;
+.identification-intro {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.scenario-cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.scenario-summary-card {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.scenario-summary-card .scenario-header {
+    text-align: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.scenario-summary-card .scenario-header-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.scenario-summary-card .scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.scenario-option-summary {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 2px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
     background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.95rem;
 }
 
-.scenario-result.correct {
-    background-color: #d4edda;
-    border-color: #28a745;
+.scenario-option-summary .action-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.payoff-short {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.active-scenario-card {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
+
+.inactive-scenario-card {
+    opacity: 0.6;
+}
+
+.identification-lines {
+    background-color: white;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    border: 2px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.identification-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.identification-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.identification-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.identification-verdict {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+    font-weight: 500;
+}
+
+.identification-verdict.correct {
     color: #155724;
 }
 
-.scenario-result.incorrect {
-    background-color: #f8d7da;
-    border-color: #dc3545;
+.identification-verdict.incorrect {
     color: #721c24;
-}
-
-.scenario-header-result {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.scenario-symbol-result {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.scenario-label-result {
-    font-weight: 600;
-}
-
-.result-indicator {
-    font-size: 2rem;
-    font-weight: bold;
-    flex-shrink: 0;
-}
-
-.icon-check {
-    color: #28a745;
-}
-
-.icon-cross {
-    color: #dc3545;
 }
 
 .bonus-summary {
@@ -358,6 +449,12 @@
 .completion-box p {
     margin: 0;
     opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+    .scenario-cards-row {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% next_button %}

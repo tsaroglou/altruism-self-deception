@@ -1,0 +1,92 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block content %}
+<div class="welcome-container">
+    <h2>Welcome</h2>
+
+    <div class="instructions-section">
+        <h4>About this study</h4>
+        <p>
+            We are researchers at the Interdisciplisnary Transformation University Austria.
+            In this laboratory study, we are interested in how people make decisions in
+            simple tasks. The study will take around 15 minutes.
+        </p>
+        <p>
+            You will receive a base payment for taking part. In addition, you can earn
+            bonus points depending on your decisions during the task. Some of your
+            decisions will also generate points for a charity.
+        </p>
+        <p>
+            Your participation is <strong>anonymous</strong>. Your data will be stored
+            under an ID code that does not reveal your identity. Aggregate results may be
+            used for scientific publications and shared in anonymized form with other
+            researchers.
+        </p>
+        <p>
+            Participation is completely <strong>voluntary</strong>. You may stop at any
+            time.
+        </p>
+        <p>
+            If you have any questions about this study, you can contact us at
+            <a href="mailto:socialdynamics@it-u.at">socialdynamics@it-u.at</a>.
+        </p>
+        <p>
+            By selecting <strong>"I consent to participate"</strong> below, you confirm
+            that you have read this information and agree to take part in the study.
+        </p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Your decision</h4>
+        <div class="form-group">
+            {{ form.consent }}
+        </div>
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.welcome-container h2 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+}
+
+.instructions-section h4 {
+    color: #34495e;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.instructions-section p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.instructions-section p:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+{% next_button %}
+{% endblock %}
+

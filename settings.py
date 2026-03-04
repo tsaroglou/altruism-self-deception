@@ -8,6 +8,12 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         view_again_cost=0,
     ),
+    dict(
+        name='xo_identification',
+        display_name='X/O Identification Only',
+        app_sequence=['xo_identification'],
+        num_demo_participants=1,
+    ),
 ]
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs

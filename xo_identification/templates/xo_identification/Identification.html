@@ -1,0 +1,293 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+
+{% block content %}
+<div class="interpretation-container">
+    <div class="form-section">
+        <h4>Which symbol appeared more frequently in the grid?</h4>
+    </div>
+
+    <div class="symbol-choice">
+        <label class="symbol-card-label">
+            <input type="radio" name="reported_symbol" value="X" required>
+            <div class="symbol-card">
+                <div class="symbol-card-body">
+                    <span class="symbol-letter">X</span>
+                </div>
+            </div>
+        </label>
+        <label class="symbol-card-label">
+            <input type="radio" name="reported_symbol" value="O" required>
+            <div class="symbol-card">
+                <div class="symbol-card-body">
+                    <span class="symbol-letter">O</span>
+                </div>
+            </div>
+        </label>
+    </div>
+
+    <div class="view-again-hidden" style="display:none;">
+        <div class="view-controls">
+            <button id="view-again-btn" type="button" class="btn btn-outline-primary">
+                View Grid Again
+            </button>
+            <span id="view-count-note" class="count-note"></span>
+        </div>
+        <div id="grid-overlay" class="grid-overlay" hidden>
+            <div class="overlay-header">Grid Preview (2 seconds)</div>
+            <div class="symbol-grid" data-grid-cols="{{ grid_cols }}">
+                {% for row in grid_rows %}
+                    {% for cell in row %}
+                        <div class="cell">{{ cell }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div style="display:none;">
+        {{ formfield 'view_again_count' }}
+        {{ formfield 'reported_symbol_rt' }}
+    </div>
+</div>
+
+<style>
+.interpretation-container {
+    max-width: 700px;
+    margin: 7rem auto 0 auto;
+}
+
+.symbol-choice {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.symbol-card-label {
+    display: block;
+    cursor: pointer;
+}
+
+.symbol-card-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.symbol-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.symbol-card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.symbol-letter {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.symbol-caption {
+    font-size: 1rem;
+    color: #555;
+}
+
+.symbol-card:hover {
+    background-color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: scale(1.03);
+}
+
+.symbol-card-label input[type="radio"]:checked + .symbol-card {
+    background-color: #e7f3ff;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+.form-section {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.form-section h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.form-subtitle {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.view-controls .btn {
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+}
+
+.count-note {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+.grid-overlay {
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.overlay-header {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.symbol-grid {
+    display: inline-grid;
+    gap: 0.25rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    justify-content: center;
+}
+
+.symbol-grid .cell {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #bdc3c7;
+    background-color: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .symbol-choice {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+.next-button-wrapper {
+    text-align: center;
+    margin-top: 1rem;
+}
+</style>
+
+<script>
+    (function() {
+        const viewButton = document.getElementById('view-again-btn');
+        const overlay = document.getElementById('grid-overlay');
+        const symbolGrid = document.querySelector('.symbol-grid');
+        const viewCountInput =
+            document.getElementById('id_view_again_count') ||
+            document.getElementById('id_player-view_again_count') ||
+            document.querySelector('[name="view_again_count"]');
+        const reactionInput =
+            document.getElementById('id_reported_symbol_rt') ||
+            document.getElementById('id_player-reported_symbol_rt') ||
+            document.querySelector('[name="reported_symbol_rt"]');
+        const viewCountNote = document.getElementById('view-count-note');
+        const revealMillis = 2000;
+        let viewCount = 0;
+        let revealTimeout = null;
+        const startTime = Date.now();
+
+        const form = document.querySelector('form');
+        if (viewCountInput && !viewCountInput.value) {
+            viewCountInput.value = 0;
+        }
+        if (reactionInput && !reactionInput.value) {
+            reactionInput.value = 0;
+        }
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (reactionInput && (!reactionInput.value || reactionInput.value === '0')) {
+                    reactionInput.value = ((Date.now() - startTime) / 1000).toFixed(3);
+                }
+            });
+        }
+
+        function hideGrid() {
+            overlay.hidden = true;
+            overlay.classList.remove('visible');
+            if (viewButton) {
+                viewButton.disabled = false;
+            }
+        }
+
+        function showGrid() {
+            overlay.hidden = false;
+            overlay.classList.add('visible');
+            if (viewButton) {
+                viewButton.disabled = true;
+            }
+            if (revealTimeout) {
+                clearTimeout(revealTimeout);
+            }
+            revealTimeout = setTimeout(hideGrid, revealMillis);
+        }
+
+        if (symbolGrid && symbolGrid.dataset.gridCols) {
+            const cols = parseInt(symbolGrid.dataset.gridCols, 10);
+            if (!Number.isNaN(cols)) {
+                symbolGrid.style.gridTemplateColumns = `repeat(${cols}, 2.5rem)`;
+            }
+        }
+
+        if (viewButton) {
+            viewButton.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                viewCount += 1;
+                if (viewCountInput) {
+                    viewCountInput.value = viewCount;
+                }
+                if (viewCountNote) {
+                    viewCountNote.textContent = `(Viewed ${viewCount} time${viewCount === 1 ? '' : 's'})`;
+                }
+                showGrid();
+            });
+        }
+    })();
+</script>
+
+<div class="next-button-wrapper">
+    {% next_button %}
+</div>
+{% endblock %}
+

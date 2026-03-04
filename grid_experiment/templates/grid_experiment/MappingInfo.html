@@ -1,7 +1,6 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Scenario Information{% endblock %}
 
 {% block content %}
 <div class="instructions-container">
@@ -13,65 +12,83 @@
     <div class="scenario-mapping">
         <div class="scenario-card">
             <div class="scenario-header">
-                <span class="symbol-large">{{ moral_symbol }}</span>
+                <span class="scenario-header-title">Scenario X</span>
             </div>
-            <div class="payoff-table-container">
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Action</th>
-                            <th>Your Payoff</th>
-                            <th>Charity Payoff</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>A</strong></td>
-                            <td>{{ payoffs.moral_conflict.A.player }}</td>
-                            <td>{{ payoffs.moral_conflict.A.charity }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>B</strong></td>
-                            <td>{{ payoffs.moral_conflict.B.player }}</td>
-                            <td>{{ payoffs.moral_conflict.B.charity }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="scenario-actions">
+                <div class="scenario-option">
+                    <div class="scenario-option-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="scenario-option">
+                    <div class="scenario-option-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
         <div class="scenario-card">
             <div class="scenario-header">
-                <span class="symbol-large">{{ win_symbol }}</span>
+                <span class="scenario-header-title">Scenario O</span>
             </div>
-            <div class="payoff-table-container">
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Action</th>
-                            <th>Your Payoff</th>
-                            <th>Charity Payoff</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>A</strong></td>
-                            <td>{{ payoffs.win_win.A.player }}</td>
-                            <td>{{ payoffs.win_win.A.charity }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>B</strong></td>
-                            <td>{{ payoffs.win_win.B.player }}</td>
-                            <td>{{ payoffs.win_win.B.charity }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="scenario-actions">
+                <div class="scenario-option">
+                    <div class="scenario-option-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="scenario-option">
+                    <div class="scenario-option-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
     <div class="alert alert-info">
-        <strong>Important:</strong> This mapping remains constant throughout the entire experiment. Once you learn whether {{ moral_symbol }} or {{ win_symbol }} indicates each scenario, that relationship does not change.
+        <strong>Important:</strong> This mapping remains constant throughout the entire experiment. Once you learn whether X or O indicates each scenario, that relationship does not change.
     </div>
 </div>
 
@@ -119,12 +136,10 @@
     border-bottom: 2px solid #dee2e6;
 }
 
-.symbol-large {
-    font-size: 3rem;
-    font-weight: 700;
+.scenario-header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #2c3e50;
-    display: block;
-    margin-bottom: 0.5rem;
 }
 
 .scenario-card h4 {
@@ -134,28 +149,59 @@
     font-weight: 600;
 }
 
-.payoff-table-container {
-    margin-top: 1rem;
+.scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.payoff-table-container table {
-    margin-bottom: 0;
-    background-color: white;
+.scenario-option {
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    transition: all 0.2s ease;
 }
 
-.payoff-table-container thead {
+.scenario-option:hover {
     background-color: #f8f9fa;
+    border-color: #3498db;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
-.payoff-table-container th {
+.scenario-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-name {
+    font-size: 1.1rem;
     font-weight: 600;
-    color: #495057;
-    text-align: center;
+    color: #2c3e50;
 }
 
-.payoff-table-container td {
-    text-align: center;
-    vertical-align: middle;
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payoff-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
 }
 
 .alert {

@@ -10,7 +10,8 @@ Altruism & self-deception experiment with X/O grid stimuli.
 class Constants(BaseConstants):
     name_in_url = "grid_experiment"
     players_per_group = None
-    num_rounds = 30
+    # 4 trial rounds (with feedback) + 24 main rounds (for payment)
+    num_rounds = 28
     grid_rows = 7
     grid_cols = 7
     total_cells = grid_rows * grid_cols
@@ -95,55 +96,96 @@ def to_rows(pattern: str):
 
 def build_trial_plan(moral_symbol: str, win_symbol: str):
     """
-    Build trial plan with 30 rounds:
-    - 15 difficulty levels (majority counts from 25 to 39)
-    - Each difficulty level appears twice: once with O as majority, once with X as majority
-    - Scenario is determined by which symbol maps to which scenario (moral_symbol -> moral_conflict, win_symbol -> win_win)
-    - Trials are shuffled randomly
+    Build trial plan with:
+    - 4 fixed trial rounds (practice, with feedback)
+    - 24 main rounds (for payment) with specified X/O counts
     """
-    trials = []
-    
-    # Create 30 trials: 15 difficulty levels × 2 symbols (O and X)
-    for majority_count in Constants.difficulty_levels:
-        # Trial with O as majority
-        trials.append({
-            "majority_count": majority_count,
-            "majority_symbol": "O",
-        })
-        # Trial with X as majority
-        trials.append({
-            "majority_count": majority_count,
-            "majority_symbol": "X",
-        })
-    
-    # Assign scenarios based on symbol-to-scenario mapping
-    final_trials = []
-    for trial in trials:
-        # Determine scenario: if majority_symbol matches moral_symbol, it's moral_conflict
-        # If it matches win_symbol, it's win_win
-        if trial["majority_symbol"] == moral_symbol:
+    plan = []
+
+    # Helper to add a single round config
+    def add_round(x_count: int, o_count: int, is_trial: bool):
+        if x_count + o_count != Constants.total_cells:
+            raise ValueError("X and O counts must sum to total_cells")
+        if x_count > o_count:
+            majority_symbol = "X"
+            majority_count = x_count
+        elif o_count > x_count:
+            majority_symbol = "O"
+            majority_count = o_count
+        else:
+            # Tie should not happen with odd grid size, but guard anyway
+            majority_symbol = random.choice(["X", "O"])
+            majority_count = x_count
+
+        # Determine scenario from which symbol is majority in this round
+        if majority_symbol == moral_symbol:
             scenario = "moral_conflict"
-        elif trial["majority_symbol"] == win_symbol:
+        elif majority_symbol == win_symbol:
             scenario = "win_win"
         else:
-            # This shouldn't happen, but handle edge case
             scenario = random.choice(["moral_conflict", "win_win"])
-        
-        pattern = make_grid_pattern(trial["majority_symbol"], trial["majority_count"])
-        final_trials.append(
+
+        pattern = make_grid_pattern(majority_symbol, majority_count)
+        plan.append(
             dict(
                 scenario=scenario,
-                difficulty=str(trial["majority_count"]),  # Store as string for compatibility
-                majority_symbol=trial["majority_symbol"],
-                majority_count=trial["majority_count"],
+                difficulty=str(majority_count),
+                majority_symbol=majority_symbol,
+                majority_count=majority_count,
                 pattern=pattern,
+                is_trial=is_trial,
             )
         )
-    
-    # Shuffle the final trials to randomize order
-    random.shuffle(final_trials)
-    
-    return final_trials
+
+    # 4 TRIAL ROUNDS (practice, non-paying)
+    trial_pairs = [
+        (39, 10),  # 39 X, 10 O
+        (10, 39),  # 10 X, 39 O
+        (25, 24),  # 25 X, 24 O
+        (24, 25),  # 24 X, 25 O
+    ]
+    for x_count, o_count in trial_pairs:
+        add_round(x_count, o_count, is_trial=True)
+
+    # MAIN ROUNDS (for payment) - 24 rounds with specified X/O counts
+    main_pairs = []
+
+    # Extreme cases: 49-0 and 0-49, 2 times each
+    main_pairs.extend([(49, 0)] * 2)
+    main_pairs.extend([(0, 49)] * 2)
+
+    # Mid-range cases (X - O) as provided (adjusted so X+O = 49)
+    # Keep only the harder levels (majority counts 29 down to 25)
+    base_mid_x_o = [
+        (20, 29),
+        (21, 28),
+        (22, 27),
+        (23, 26),
+        (24, 25),
+    ]
+    # Mirror cases (X - O) where previously O was majority (adjusted so X+O = 49)
+    base_mid_o_x = [
+        (29, 20),
+        (28, 21),
+        (27, 22),
+        (26, 23),
+        (25, 24),
+    ]
+    # Use each remaining difficulty level twice (per orientation)
+    for _ in range(2):
+        main_pairs.extend(base_mid_x_o)
+        main_pairs.extend(base_mid_o_x)
+
+    if len(main_pairs) != 24:
+        raise ValueError("Expected 24 main-round configurations")
+
+    # Randomize order of main rounds
+    random.shuffle(main_pairs)
+
+    for x_count, o_count in main_pairs:
+        add_round(x_count, o_count, is_trial=False)
+
+    return plan
 
 
 class Subsession(BaseSubsession):
@@ -177,17 +219,86 @@ class Player(BasePlayer):
         choices=[("X", "X"), ("O", "O")], widget=widgets.RadioSelect
     )
     view_again_count = models.IntegerField(initial=0)
-    reaction_time = models.FloatField()
+    # Reaction time (in seconds) for reporting the scenario symbol on the Interpretation page
+    reported_symbol_rt = models.FloatField()
 
     action_choice = models.StringField(
         choices=[("A", "Action A"), ("B", "Action B")], widget=widgets.RadioSelect
     )
+    # Reaction time (in seconds) for choosing an action on the AllocationDecision page
+    action_choice_rt = models.FloatField()
+
+    # Accuracy rate in the 20 non-extreme main rounds
+    # (computed and stored on the final round only; not shown to participants)
+    mid_main_accuracy = models.FloatField()
 
     identification_correct = models.BooleanField(initial=False)
     identification_bonus_awarded = models.CurrencyField(initial=cu(0))
     net_identification_bonus = models.CurrencyField(initial=cu(0))
     view_again_cost_applied = models.CurrencyField(initial=cu(0))
     charity_payoff = models.CurrencyField(initial=cu(0))
+    consent = models.StringField(
+        choices=[("yes", "I consent to participate"), ("no", "I do not consent")],
+        widget=widgets.RadioSelect,
+    )
+    # Comprehension test answers (multiple choice)
+    comp1_q1 = models.StringField(
+        choices=[
+            ("true_scenario", "The true active scenario (Scenario X or O)"),
+            ("reported_scenario", "The scenario I reported"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp1_q2 = models.StringField(
+        choices=[
+            ("scenario_x", "Scenario X"),
+            ("scenario_o", "Scenario O"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp1_q3 = models.StringField(
+        choices=[
+            ("scenario_o", "Scenario O"),
+            ("scenario_x", "Scenario X"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp1_q4 = models.StringField(
+        choices=[
+            ("true_scenario", "The true active scenario determined by the grid"),
+            ("reported_scenario", "The scenario I reported"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+
+    comp2_q1 = models.StringField(
+        choices=[
+            ("true_scenario", "The true active scenario (Scenario X or O)"),
+            ("reported_scenario", "The scenario I reported"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp2_q2 = models.StringField(
+        choices=[
+            ("scenario_x", "Scenario X"),
+            ("scenario_o", "Scenario O"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp2_q3 = models.StringField(
+        choices=[
+            ("scenario_o", "Scenario O"),
+            ("scenario_x", "Scenario X"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp2_q4 = models.StringField(
+        choices=[
+            ("true_scenario", "The true active scenario determined by the grid"),
+            ("reported_scenario", "The scenario I reported"),
+        ],
+        widget=widgets.RadioSelect,
+    )
 
     def grid_rows(self):
         if self.field_maybe_none("grid_pattern") is None:
@@ -223,47 +334,103 @@ class Player(BasePlayer):
         self.payoff = base_payoff + self.net_identification_bonus
 
 
-class Introduction(Page):
+class Consent(Page):
+    form_model = "player"
+    form_fields = ["consent"]
+
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
 
     @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        # Store consent at the participant level so it is available in all rounds
+        player.participant.vars["consent"] = player.consent
+
+
+class NoConsent(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return (
+            player.round_number == 1
+            and player.participant.vars.get("consent") == "no"
+        )
+
+
+class Introduction(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return (
+            player.round_number == 1
+            and player.participant.vars.get("consent") == "yes"
+        )
+
+    @staticmethod
     def vars_for_template(player: Player):
         ensure_round_state(player)
+        moral_symbol = player.participant.vars["moral_symbol"]
+        win_symbol = player.participant.vars["win_symbol"]
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
         return dict(
             num_rounds=Constants.num_rounds,
             grid_size=f"{Constants.grid_rows} × {Constants.grid_cols}",
             display_seconds=2,
             identification_bonus=Constants.identification_bonus,
-            scenario_label_moral=scenario_label(player.participant.vars["moral_symbol"]),
-            scenario_label_win=scenario_label(player.participant.vars["win_symbol"]),
+            scenario_label_moral=scenario_label(moral_symbol),
+            scenario_label_win=scenario_label(win_symbol),
             view_again_cost=player.participant.vars.get(
                 "view_again_cost", Constants.view_again_cost
             ),
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
         )
 
 
 class MappingInfo(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.round_number == 1
+        return (
+            player.round_number == 1
+            and player.participant.vars.get("consent") == "yes"
+        )
 
     @staticmethod
     def vars_for_template(player: Player):
         ensure_round_state(player)
+        moral_symbol = player.participant.vars["moral_symbol"]
+        win_symbol = player.participant.vars["win_symbol"]
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
         return dict(
-            moral_symbol=player.participant.vars["moral_symbol"],
-            win_symbol=player.participant.vars["win_symbol"],
-            scenario_label_moral=scenario_label(player.participant.vars["moral_symbol"]),
-            scenario_label_win=scenario_label(player.participant.vars["win_symbol"]),
-            payoffs=Constants.payoffs,
+            moral_symbol=moral_symbol,
+            win_symbol=win_symbol,
+            scenario_label_moral=scenario_label(moral_symbol),
+            scenario_label_win=scenario_label(win_symbol),
+            payoffs=payoffs,
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
         )
 
 
 class Stimulus(Page):
-    timeout_seconds = 2
+    timeout_seconds = 5
     timer_text = "Stimulus on screen"
+
+    @staticmethod
+    def is_displayed(player: Player):
+        consent_ok = player.participant.vars.get("consent") == "yes"
+        comp_passed = player.participant.vars.get("comp_passed", False)
+        comp_failed = player.participant.vars.get("comp_failed", False)
+        if not consent_ok or comp_failed:
+            return False
+        # Always allow the 4 practice rounds
+        if player.round_number <= 4:
+            return True
+        # For main rounds, only proceed if comprehension was passed
+        return comp_passed
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -283,17 +450,17 @@ class Stimulus(Page):
 
 class Interpretation(Page):
     form_model = "player"
-    form_fields = ["reported_symbol", "view_again_count", "reaction_time"]
+    form_fields = ["reported_symbol", "view_again_count", "reported_symbol_rt"]
 
     @staticmethod
     def vars_for_template(player: Player):
         ensure_round_state(player)
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
-        # Get scenario labels for X and O
-        scenario_label_x = scenario_label("X")
-        scenario_label_o = scenario_label("O")
-        
+        payoffs = Constants.payoffs
+        # Always show Scenario X left, Scenario O right
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
         return dict(
             grid_rows=player.grid_rows(),
             grid_cols=Constants.grid_cols,
@@ -301,8 +468,11 @@ class Interpretation(Page):
             win_symbol=win_symbol,
             scenario_label_moral=scenario_label(moral_symbol),
             scenario_label_win=scenario_label(win_symbol),
-            scenario_label_x=scenario_label_x,
-            scenario_label_o=scenario_label_o,
+            scenario_label_x=scenario_label("X"),
+            scenario_label_o=scenario_label("O"),
+            payoffs=payoffs,
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
             view_again_cost=player.participant.vars.get(
                 "view_again_cost", Constants.view_again_cost
             ),
@@ -313,10 +483,32 @@ class Interpretation(Page):
         if values["reported_symbol"] not in {"X", "O"}:
             return "Please select which symbol you believe appeared more often."
 
+    @staticmethod
+    def is_displayed(player: Player):
+        consent_ok = player.participant.vars.get("consent") == "yes"
+        comp_passed = player.participant.vars.get("comp_passed", False)
+        comp_failed = player.participant.vars.get("comp_failed", False)
+        if not consent_ok or comp_failed:
+            return False
+        if player.round_number <= 4:
+            return True
+        return comp_passed
+
 
 class AllocationDecision(Page):
     form_model = "player"
-    form_fields = ["action_choice"]
+    form_fields = ["action_choice", "action_choice_rt"]
+
+    @staticmethod
+    def is_displayed(player: Player):
+        consent_ok = player.participant.vars.get("consent") == "yes"
+        comp_passed = player.participant.vars.get("comp_passed", False)
+        comp_failed = player.participant.vars.get("comp_failed", False)
+        if not consent_ok or comp_failed:
+            return False
+        if player.round_number <= 4:
+            return True
+        return comp_passed
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -324,8 +516,10 @@ class AllocationDecision(Page):
         payoffs = Constants.payoffs
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
+        # Always show Scenario X left, Scenario O right
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
         
-        # Determine which scenario corresponds to the reported symbol
         reported_symbol = player.reported_symbol
         if reported_symbol == moral_symbol:
             chosen_scenario = "moral_conflict"
@@ -336,16 +530,9 @@ class AllocationDecision(Page):
             chosen_scenario_label = scenario_label(win_symbol)
             chosen_scenario_symbol = win_symbol
         else:
-            # Fallback (shouldn't happen)
             chosen_scenario = "win_win"
             chosen_scenario_label = scenario_label(win_symbol)
             chosen_scenario_symbol = win_symbol
-        
-        # Get payoffs for the chosen scenario
-        chosen_payoffs = {
-            "A": payoffs[chosen_scenario]["A"],
-            "B": payoffs[chosen_scenario]["B"],
-        }
         
         return dict(
             moral_symbol=moral_symbol,
@@ -354,10 +541,13 @@ class AllocationDecision(Page):
             scenario_label_win=scenario_label(win_symbol),
             scenario=player.actual_scenario,
             payoffs=payoffs,
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
             chosen_scenario=chosen_scenario,
             chosen_scenario_label=chosen_scenario_label,
             chosen_scenario_symbol=chosen_scenario_symbol,
-            chosen_payoffs=chosen_payoffs,
+            chosen_payoffs=payoffs_x if chosen_scenario_symbol == "X" else payoffs_o,
+            other_payoffs=payoffs_o if chosen_scenario_symbol == "X" else payoffs_x,
         )
 
     @staticmethod
@@ -367,17 +557,29 @@ class AllocationDecision(Page):
 
 class RoundSummary(Page):
     @staticmethod
+    def is_displayed(player: Player):
+        # Show feedback only for the 4 practice rounds
+        return (
+            player.participant.vars.get("consent") == "yes"
+            and player.round_number <= 4
+        )
+
+    @staticmethod
     def vars_for_template(player: Player):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
-        reported_symbol = player.reported_symbol
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        # reported_symbol can be None in edge cases; guard against that
+        reported_symbol = player.field_maybe_none("reported_symbol") or ""
+        # action_choice can be None in some edge cases (e.g. debugging); guard against that
+        action_choice = player.field_maybe_none("action_choice")
+        if action_choice and player.field_maybe_none("actual_scenario"):
+            base_payoff = payoffs[player.actual_scenario][action_choice]["player"]
+        else:
+            base_payoff = cu(0)
         
-        # Get scenario labels for X and O
-        x_scenario_label = scenario_label("X")
-        o_scenario_label = scenario_label("O")
-        
-        # Determine if the reported symbol was correct
-        # Show result only for the symbol they chose
         x_was_chosen = (reported_symbol == "X")
         o_was_chosen = (reported_symbol == "O")
         x_was_correct = x_was_chosen and (player.majority_symbol == "X")
@@ -391,7 +593,7 @@ class RoundSummary(Page):
             view_again_count=player.view_again_count,
             view_again_label="view" if player.view_again_count == 1 else "views",
             view_again_unit_cost=get_view_again_cost(player),
-            action_choice=player.action_choice,
+            action_choice=action_choice or "",
             actual_scenario=player.actual_scenario,
             actual_scenario_symbol=scenario_symbol_for(player, player.actual_scenario)
             if player.actual_scenario
@@ -404,10 +606,13 @@ class RoundSummary(Page):
             charity_payoff=player.charity_payoff,
             total_rounds=Constants.num_rounds,
             player_payoff=player.payoff,
+            base_payoff=base_payoff,
             moral_symbol=moral_symbol,
             win_symbol=win_symbol,
-            scenario_label_x=x_scenario_label,
-            scenario_label_o=o_scenario_label,
+            scenario_label_x=scenario_label("X"),
+            scenario_label_o=scenario_label("O"),
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
             x_was_chosen=x_was_chosen,
             o_was_chosen=o_was_chosen,
             x_was_correct=x_was_correct,
@@ -416,12 +621,191 @@ class RoundSummary(Page):
         )
 
 
+class FinalPage(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.round_number == Constants.num_rounds and player.participant.vars.get(
+            "consent"
+        ) == "yes"
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        pvars = player.participant.vars
+        comp_failed = pvars.get("comp_failed", False)
+
+        # If comprehension failed, no main-task earnings; show excluded screen
+        if comp_failed:
+            return dict(
+                excluded=True,
+                payment_round=None,
+                payment_player_payoff=None,
+                payment_charity_payoff=None,
+            )
+
+        # Compute accuracy in the 20 non-extreme main rounds (majority_count < 49)
+        # and store it for export (on the final-round player and in participant.vars).
+        main_round_players = player.in_rounds(5, Constants.num_rounds)
+        mid_round_players = [
+            p for p in main_round_players if p.majority_count < Constants.total_cells
+        ]
+        if mid_round_players:
+            correct_count = sum(1 for p in mid_round_players if p.identification_correct)
+            accuracy = correct_count / len(mid_round_players)
+        else:
+            accuracy = 0.0
+        player.mid_main_accuracy = accuracy
+        pvars["mid_main_accuracy"] = accuracy
+
+        # Choose one paying round from main-task rounds (rounds 5..num_rounds),
+        # but do this only once and store it on the participant so that refreshing
+        # the final page does not change the selected round.
+        if "paying_round_number" in pvars:
+            paying_round_number = pvars["paying_round_number"]
+        else:
+            main_round_numbers = list(range(5, Constants.num_rounds + 1))
+            paying_round_number = random.choice(main_round_numbers)
+            pvars["paying_round_number"] = paying_round_number
+        # Get this player's record in the chosen paying round
+        payment_player = player.in_round(paying_round_number)
+
+        return dict(
+            excluded=False,
+            payment_round=paying_round_number,
+            payment_player_payoff=payment_player.payoff,
+            payment_charity_payoff=payment_player.charity_payoff,
+        )
+
+
+class ComprehensionTest1(Page):
+    form_model = "player"
+    form_fields = ["comp1_q1", "comp1_q2", "comp1_q3", "comp1_q4"]
+
+    @staticmethod
+    def is_displayed(player: Player):
+        return (
+            player.participant.vars.get("consent") == "yes"
+            and player.round_number == 4
+            and not player.participant.vars.get("comp_passed", False)
+            and not player.participant.vars.get("comp_failed", False)
+        )
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        ensure_round_state(player)
+        moral_symbol = player.participant.vars["moral_symbol"]
+        win_symbol = player.participant.vars["win_symbol"]
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        return dict(
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
+        )
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        pvars = player.participant.vars
+        correct_answers = {
+            "comp1_q1": "true_scenario",
+            "comp1_q2": "scenario_x",
+            "comp1_q3": "scenario_o",
+            "comp1_q4": "true_scenario",
+        }
+        all_correct = all(
+            getattr(player, field) == expected
+            for field, expected in correct_answers.items()
+        )
+        if all_correct:
+            pvars["comp_passed"] = True
+        else:
+            pvars["needs_second_test"] = True
+
+
+class ComprehensionTest2(Page):
+    form_model = "player"
+    form_fields = ["comp2_q1", "comp2_q2", "comp2_q3", "comp2_q4"]
+
+    @staticmethod
+    def is_displayed(player: Player):
+        pvars = player.participant.vars
+        return (
+            pvars.get("consent") == "yes"
+            and player.round_number == 4
+            and pvars.get("needs_second_test", False)
+            and not pvars.get("comp_passed", False)
+            and not pvars.get("comp_failed", False)
+        )
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        ensure_round_state(player)
+        moral_symbol = player.participant.vars["moral_symbol"]
+        win_symbol = player.participant.vars["win_symbol"]
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        return dict(
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
+        )
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        pvars = player.participant.vars
+        correct_answers = {
+            "comp2_q1": "true_scenario",
+            "comp2_q2": "scenario_o",
+            "comp2_q3": "scenario_x",
+            "comp2_q4": "true_scenario",
+        }
+        all_correct = all(
+            getattr(player, field) == expected
+            for field, expected in correct_answers.items()
+        )
+        if all_correct:
+            pvars["comp_passed"] = True
+        else:
+            pvars["comp_failed"] = True
+
+
+class ComprehensionFailNotice(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        pvars = player.participant.vars
+        return (
+            pvars.get("consent") == "yes"
+            and player.round_number == 4
+            and pvars.get("needs_second_test", False)
+            and not pvars.get("comp_passed", False)
+            and not pvars.get("comp_failed", False)
+        )
+
+
+class ComprehensionPassNotice(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        pvars = player.participant.vars
+        return (
+            pvars.get("consent") == "yes"
+            and player.round_number == 4
+            and pvars.get("comp_passed", False)
+            and not pvars.get("comp_failed", False)
+        )
+
+
 page_sequence = [
+    Consent,
+    NoConsent,
     Introduction,
     MappingInfo,
     Stimulus,
     Interpretation,
     AllocationDecision,
     RoundSummary,
+    ComprehensionTest1,
+    ComprehensionFailNotice,
+    ComprehensionTest2,
+    ComprehensionPassNotice,
+    FinalPage,
 ]
 

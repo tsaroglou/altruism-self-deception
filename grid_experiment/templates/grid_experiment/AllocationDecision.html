@@ -15,48 +15,157 @@
     </div>
 
     <div class="scenario-action-container">
-        <div class="scenario-display-box">
+        <!-- Left: Scenario X (always) -->
+        <div class="scenario-column {% if chosen_scenario_symbol != 'X' %}scenario-column-disabled{% endif %}">
             <div class="scenario-header">
-                <span class="scenario-symbol-large">{{ chosen_scenario_symbol }}</span>
-                <div class="scenario-title">{{ chosen_scenario_label }}</div>
+                <span class="scenario-header-title">Scenario X</span>
+            </div>
+            <div class="actions-vertical">
+                {% if chosen_scenario_symbol == 'X' %}
+                <label class="action-button-label">
+                    <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
+                    <div class="action-button-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+                <label class="action-button-label">
+                    <input type="radio" name="action_choice" value="B" id="id_action_choice_1" required>
+                    <div class="action-button-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+                {% else %}
+                <div class="action-card-disabled">
+                    <div class="action-button-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-card-disabled">
+                    <div class="action-button-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        
-        <div class="actions-vertical">
-            <label class="action-button-label">
-                <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
-                <div class="action-button-content">
-                    <span class="action-name">Action A</span>
-                    <div class="payoff-info">
-                        <div class="payoff-line">
-                            <span class="payoff-label">You:</span>
-                            <span class="payoff-amount">{{ chosen_payoffs.A.player }}</span>
+
+        <!-- Right: Scenario O (always) -->
+        <div class="scenario-column {% if chosen_scenario_symbol != 'O' %}scenario-column-disabled{% endif %}">
+            <div class="scenario-header">
+                <span class="scenario-header-title">Scenario O</span>
+            </div>
+            <div class="actions-vertical">
+                {% if chosen_scenario_symbol == 'O' %}
+                <label class="action-button-label">
+                    <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
+                    <div class="action-button-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                            </div>
                         </div>
-                        <div class="payoff-line">
-                            <span class="payoff-label">Charity:</span>
-                            <span class="payoff-amount">{{ chosen_payoffs.A.charity }}</span>
+                    </div>
+                </label>
+                <label class="action-button-label">
+                    <input type="radio" name="action_choice" value="B" id="id_action_choice_1" required>
+                    <div class="action-button-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+                {% else %}
+                <div class="action-card-disabled">
+                    <div class="action-button-content">
+                        <span class="action-name">Action A</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </label>
-            
-            <label class="action-button-label">
-                <input type="radio" name="action_choice" value="B" id="id_action_choice_1" required>
-                <div class="action-button-content">
-                    <span class="action-name">Action B</span>
-                    <div class="payoff-info">
-                        <div class="payoff-line">
-                            <span class="payoff-label">You:</span>
-                            <span class="payoff-amount">{{ chosen_payoffs.B.player }}</span>
-                        </div>
-                        <div class="payoff-line">
-                            <span class="payoff-label">Charity:</span>
-                            <span class="payoff-amount">{{ chosen_payoffs.B.charity }}</span>
+                <div class="action-card-disabled">
+                    <div class="action-button-content">
+                        <span class="action-name">Action B</span>
+                        <div class="payoff-info">
+                            <div class="payoff-line">
+                                <span class="payoff-label">You:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                            </div>
+                            <div class="payoff-line">
+                                <span class="payoff-label">Charity:</span>
+                                <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </label>
+                {% endif %}
+            </div>
         </div>
+    </div>
+
+    <div style="display:none;">
+        {{ formfield 'action_choice_rt' }}
     </div>
 </div>
 
@@ -94,33 +203,20 @@
     flex-wrap: wrap;
 }
 
-.scenario-display-box {
-    flex: 0 0 auto;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    min-width: 200px;
+.scenario-column {
+    flex: 1 1 0;
+    min-width: 250px;
 }
 
 .scenario-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
-.scenario-symbol-large {
-    font-size: 3rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.scenario-title {
+.scenario-header-title {
     font-size: 1.1rem;
     font-weight: 600;
-    text-align: center;
+    color: #2c3e50;
 }
 
 .actions-vertical {
@@ -201,6 +297,21 @@
     color: #3498db;
 }
 
+.scenario-column-disabled {
+    opacity: 0.5;
+}
+
+.scenario-column-disabled .action-button-content {
+    pointer-events: none;
+}
+
+.action-card-disabled {
+    background-color: white;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
 @media (max-width: 768px) {
     .scenario-action-container {
         flex-direction: column;
@@ -238,6 +349,26 @@
             });
         }
     });
+
+    // Record reaction time for action choice
+    const actionRtInput =
+        document.getElementById('id_action_choice_rt') ||
+        document.getElementById('id_player-action_choice_rt') ||
+        document.querySelector('[name="action_choice_rt"]');
+    const form = document.querySelector('form');
+    const startTime = Date.now();
+
+    if (actionRtInput && !actionRtInput.value) {
+        actionRtInput.value = 0;
+    }
+
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (actionRtInput && (!actionRtInput.value || actionRtInput.value === '0')) {
+                actionRtInput.value = ((Date.now() - startTime) / 1000).toFixed(3);
+            }
+        });
+    }
 })();
 </script>
 

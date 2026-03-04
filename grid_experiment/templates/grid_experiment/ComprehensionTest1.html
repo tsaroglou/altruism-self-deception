@@ -1,0 +1,252 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Comprehension Check{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h2>Comprehension Check</h2>
+
+    <div class="instructions-section">
+        <p>
+            Please answer the questions below about the rules of the experiment. You must answer all questions
+            correctly to proceed to the main part of the study. If you make a mistake, you will get a second,
+            similar comprehension check. If you also fail the second check, you will not play the main task and
+            will instead receive the participation payment plus 5 euros.
+        </p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Reminder: the two scenarios</h4>
+        <p>The tables below are the same as in the instructions.</p>
+        <div class="scenario-mapping">
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario X</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_x.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-header-title">Scenario O</span>
+                </div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.A.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line">
+                                    <span class="payoff-label">You:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.player }}</span>
+                                </div>
+                                <div class="payoff-line">
+                                    <span class="payoff-label">Charity:</span>
+                                    <span class="payoff-amount">{{ payoffs_o.B.charity }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions-section">
+        <div class="form-group">
+            <label>
+                1. If the true active scenario is Scenario X but you mistakenly report that you saw more O symbols
+                in the grid, which scenario is used to calculate your and the charity's points?
+            </label>
+            {{ form.comp1_q1 }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                2. If there are more X symbols on the grid preceding your decision, which scenario is the true active scenario?
+            </label>
+            {{ form.comp1_q2 }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                3. If there are more O symbols on the grid preceding your decision, which scenario is the true active scenario?
+            </label>
+            {{ form.comp1_q3 }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                4. Suppose there are more X symbols on the grid, but you mistakenly report that you saw more O symbols.
+                Which scenario is still used to calculate your and the charity's points?
+            </label>
+            {{ form.comp1_q4 }}
+        </div>
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.welcome-container h2 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+}
+
+.instructions-section p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #34495e;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Scenario cards styling (match main instructions/summary) */
+.scenario-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 1.5rem 0 1rem;
+}
+
+.scenario-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.scenario-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.scenario-header-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.scenario-option {
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.scenario-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.action-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payoff-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+    .scenario-mapping {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% next_button %}
+{% endblock %}
+
