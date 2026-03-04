@@ -1,13 +1,7 @@
 from os import environ
 
 SESSION_CONFIGS = [
-    dict(
-        name='grid_experiment',
-        display_name='Altruism Grid Experiment',
-        app_sequence=['grid_experiment'],
-        num_demo_participants=1,
-        view_again_cost=0,
-    ),
+   
     dict(
         name='xo_identification',
         display_name='X/O Identification Only',
@@ -15,6 +9,14 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
     ),
 ]
+
+# dict(
+ #       name='grid_experiment',
+  #      display_name='Altruism Grid Experiment',
+  #      app_sequence=['grid_experiment'],
+   #     num_demo_participants=1,
+   #     view_again_cost=0,
+    #),
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs
 # in SESSION_CONFIGS, except those that explicitly override it.
