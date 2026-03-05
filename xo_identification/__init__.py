@@ -3,7 +3,7 @@ import random
 
 
 doc = """
-Pure X/O identification task with 20 main trials (no scenarios or payoffs).
+Pure O/I identification task with 20 main trials (no scenarios or payoffs).
 """
 
 
@@ -18,7 +18,7 @@ class Constants(BaseConstants):
 
 def make_grid_pattern(majority_symbol: str, majority_count: int) -> str:
     """Create a shuffled pattern string with a given majority symbol/count."""
-    minority_symbol = "O" if majority_symbol == "X" else "X"
+    minority_symbol = "I" if majority_symbol == "O" else "O"
     minority_count = Constants.total_cells - majority_count
     cells = [majority_symbol] * majority_count + [minority_symbol] * minority_count
     random.shuffle(cells)
@@ -35,24 +35,24 @@ def to_rows(pattern: str):
 def build_plan():
     """
     Build plan for 20 identification-only rounds:
-    - Use the same 10 mid-difficulty X/O pairs as the main task in grid_experiment
+    - Use the same 10 mid-difficulty O/I pairs as the main task in grid_experiment
       (majority counts 29, 28, 27, 26, 25), plus their mirrors.
     - Each of these 10 configurations appears twice, for 20 total rounds.
     """
     plan = []
 
-    def add_round(x_count: int, o_count: int):
-        if x_count + o_count != Constants.total_cells:
-            raise ValueError("X and O counts must sum to total_cells")
-        if x_count > o_count:
-            majority_symbol = "X"
-            majority_count = x_count
-        elif o_count > x_count:
+    def add_round(o_count: int, i_count: int):
+        if o_count + i_count != Constants.total_cells:
+            raise ValueError("O and I counts must sum to total_cells")
+        if o_count > i_count:
             majority_symbol = "O"
             majority_count = o_count
+        elif i_count > o_count:
+            majority_symbol = "I"
+            majority_count = i_count
         else:
-            majority_symbol = random.choice(["X", "O"])
-            majority_count = x_count
+            majority_symbol = random.choice(["O", "I"])
+            majority_count = o_count
 
         pattern = make_grid_pattern(majority_symbol, majority_count)
         plan.append(
@@ -63,7 +63,7 @@ def build_plan():
             )
         )
 
-    # Base mid-difficulty X-minority / O-majority pairs
+    # Base mid-difficulty O-minority / I-majority pairs
     base_mid_x_o = [
         (20, 29),
         (21, 28),
@@ -71,7 +71,7 @@ def build_plan():
         (23, 26),
         (24, 25),
     ]
-    # Mirrors (X-majority / O-minority)
+    # Mirrors (O-majority / I-minority)
     base_mid_o_x = [
         (29, 20),
         (28, 21),
@@ -82,8 +82,8 @@ def build_plan():
 
     # 10 distinct configurations, each used twice = 20 rounds total
     for _ in range(2):
-        for x_count, o_count in base_mid_x_o + base_mid_o_x:
-            add_round(x_count, o_count)
+        for o_count, i_count in base_mid_x_o + base_mid_o_x:
+            add_round(o_count, i_count)
 
     if len(plan) != 20:
         raise ValueError("Expected 20 identification-only configurations")
@@ -136,7 +136,7 @@ class Player(BasePlayer):
     grid_pattern = models.LongStringField()
 
     reported_symbol = models.StringField(
-        choices=[("X", "X"), ("O", "O")], widget=widgets.RadioSelect
+        choices=[("O", "O"), ("I", "I")], widget=widgets.RadioSelect
     )
     view_again_count = models.IntegerField(initial=0)
     reported_symbol_rt = models.FloatField()
@@ -155,14 +155,14 @@ class Player(BasePlayer):
         majority_symbol = self.field_maybe_none("majority_symbol")
         if majority_symbol is None:
             pattern = self.field_maybe_none("grid_pattern") or ""
-            count_x = pattern.count("X")
             count_o = pattern.count("O")
-            if count_x > count_o:
-                majority_symbol = "X"
-            elif count_o > count_x:
+            count_i = pattern.count("I")
+            if count_o > count_i:
                 majority_symbol = "O"
+            elif count_i > count_o:
+                majority_symbol = "I"
             else:
-                majority_symbol = random.choice(["X", "O"])
+                majority_symbol = random.choice(["O", "I"])
             self.majority_symbol = majority_symbol
         self.identification_correct = self.reported_symbol == majority_symbol
 

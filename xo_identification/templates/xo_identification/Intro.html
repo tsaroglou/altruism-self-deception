@@ -8,24 +8,23 @@
 
     <div class="instructions-section">
         <p>
-        <p>
             On each round, your task is simply to indicate <strong>which symbol appeared
-            more often</strong> in a grid: X or O.
+            more often</strong> in a grid: O or I.
         </p>
         <p>
             There are {{ total_rounds }} such rounds in total. After each grid, you will
-            be asked whether you saw more X or more O symbols.
+            be asked whether you saw more O or more I symbols.
         </p>
     </div>
 
     <div class="instructions-section">
         <p>
-            Each grid is a 7 × 7 square (49 positions) filled with X and O symbols.
+            Each grid is a 7 × 7 square (49 positions) filled with O and I symbols.
             Here is an example of what a grid might look like:
         </p>
         <div class="example-grid">
             <div class="symbol-grid example-symbol-grid">
-                {% for row in "XXXXOXO" "XOXOXOX" "OOXXXOX" "XXOXOOX" "OXOXXXO" "XOOXOXX" "XOXXOOX" %}
+                {% for row in "OOOOIOI" "OIOIOIO" "IIOOOIO" "OOIOIOI" "IOIOOIO" "OIIIOOI" "OIOOIIO" %}
                     {% for ch in row %}
                         <div class="cell">{{ ch }}</div>
                     {% endfor %}
@@ -40,7 +39,7 @@
         </p>
         <p>
             After the grid disappears, you will be asked to report whether there were more
-            Xs or more Os.
+            Os or more Is.
         </p>
         <p>
             Please try to respond as accurately as you can. When you are ready to start,
