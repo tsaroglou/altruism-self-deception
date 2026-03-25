@@ -52,11 +52,10 @@ class PlayerBot(Bot):
             yield ComprehensionPassNotice
 
         # Rounds 5+ are main rounds: no RoundSummary, but we still go through the task
-        # This includes the very last round so that the app is on FinalPage after it.
         if p.round_number > 4 and p.round_number <= Constants.num_rounds:
             yield Submission(Stimulus, {}, check_html=False)
             yield Interpretation, {
-                "reported_symbol": "X",
+                "reported_symbol": "O",
                 "view_again_count": 0,
                 "reported_symbol_rt": 0,
             }
@@ -65,8 +64,23 @@ class PlayerBot(Bot):
                 "action_choice_rt": 0,
             }
 
-        # Final page at the very end (after the last main round)
+        # At the very end, answer belief and questionnaire, then show final page
         if p.round_number == Constants.num_rounds:
+            # Belief about identification accuracy: always guess all main rounds correct for testing
+            yield BeliefAccuracy, {"belief_identification_correct_count": Constants.num_rounds - 4}
+            # Questionnaire: fill with simple placeholder values
+            yield Questionnaire, {
+                "age": 30,
+                "gender_sex": "male",
+                "education_level": "bachelor",
+                "employment_status": "student",
+                "student_level": "master",
+                "field_of_study": "Test field",
+                "self_altruism": 3,
+                "donate_frequency": 2,
+                "task_difficulty": 3,
+                "study_purpose": "Testing the experiment code.",
+            }
             # FinalPage has no submit button; use Submission with check_html=False
             yield Submission(FinalPage, {}, check_html=False)
 

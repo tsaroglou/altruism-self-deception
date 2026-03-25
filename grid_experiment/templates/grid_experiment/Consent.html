@@ -1,48 +1,45 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
+{% block title %}Welcome & Consent{% endblock %}
+
 {% block content %}
 <div class="welcome-container">
-    <h2>Welcome</h2>
 
     <div class="instructions-section">
-        <h4>About this study</h4>
-        <p>
-            We are researchers at the Interdisciplisnary Transformation University Austria.
-            In this laboratory study, we are interested in how people make decisions in
-            simple tasks. The study will take around 15 minutes.
-        </p>
-        <p>
-            You will receive a base payment for taking part. In addition, you can earn
-            bonus points depending on your decisions during the task. Some of your
-            decisions will also generate points for a charity.
-        </p>
-        <p>
-            Your participation is <strong>anonymous</strong>. Your data will be stored
-            under an ID code that does not reveal your identity. Aggregate results may be
-            used for scientific publications and shared in anonymized form with other
-            researchers.
-        </p>
-        <p>
-            Participation is completely <strong>voluntary</strong>. You may stop at any
-            time.
-        </p>
-        <p>
-            If you have any questions about this study, you can contact us at
-            <a href="mailto:socialdynamics@it-u.at">socialdynamics@it-u.at</a>.
-        </p>
-        <p>
-            By selecting <strong>"I consent to participate"</strong> below, you confirm
-            that you have read this information and agree to take part in the study.
-        </p>
+        <p>Thank you for participating in this experiment.</p>
+        <p>Please do not communicate with other participants and do not use cell phones or
+        other electronic devices at any point during the experiment. If you have any
+        questions, please raise your hand and an experimenter will come to you privately.</p>
+        <p>You will receive your payment at the end of the experiment. No other participant
+        will be informed of your payment and you will not be informed of any other
+        participant's payment.</p>
     </div>
 
     <div class="instructions-section">
-        <h4>Your decision</h4>
+        <h4>Confidentiality</h4>
+        <p>All research data will remain completely anonymous and confidential.
+        Any results used in publications will be anonymous and cannot be linked to your identity.
+        All data is handled in accordance with the GDPR and EU regulations.</p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Participation</h4>
+        <p>Your participation is voluntary. You may choose to withdraw from
+        this study at any time without giving any explanation.</p>
+    </div>
+
+    <div class="instructions-section">
+        <h4>Consent</h4>
+        <p><em>"I confirm that I have read and understood the information above
+        and agree to participate in the current experiment and grant the experimenters permission
+        to use my data. I reserve the right to withdraw from the experiment without giving
+        any explanation."</em></p>
         <div class="form-group">
             {{ form.consent }}
         </div>
     </div>
+
 </div>
 
 <style>
@@ -50,13 +47,6 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 0;
-}
-
-.welcome-container h2 {
-    color: #2c3e50;
-    margin-bottom: 2rem;
-    font-weight: 600;
-    text-align: center;
 }
 
 .instructions-section {
@@ -71,9 +61,6 @@
     color: #34495e;
     margin-bottom: 1rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
 }
 
 .instructions-section p {
@@ -89,4 +76,3 @@
 
 {% next_button %}
 {% endblock %}
-

@@ -1,0 +1,67 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Accuracy Belief{% endblock %}
+
+{% block content %}
+<div class="belief-container">
+    <h3>Belief about your performance</h3>
+
+    <p>
+        In the main part of the experiment, you made decisions about which symbol (O or I)
+        appeared more frequently in the grid in <strong>{{ total_main_rounds }}</strong> rounds.
+    </p>
+    <p>
+        Please estimate how many of these <strong>{{ total_main_rounds }}</strong> symbol
+        identifications you answered correctly.
+    </p>
+    <p>
+        <strong>If your answer is exactly correct, you will receive an additional 5 euros.</strong>
+    </p>
+
+    <div class="form-section">
+        <div class="form-group">
+            <label for="id_belief_identification_correct_count">
+                How many out of {{ total_main_rounds }} O/I identifications do you think you answered correctly?
+            </label>
+            <input type="number" name="belief_identification_correct_count"
+                   id="id_belief_identification_correct_count"
+                   class="form-control" min="0" max="{{ total_main_rounds }}"
+                   placeholder="Enter a number from 0 to {{ total_main_rounds }}" required>
+        </div>
+    </div>
+</div>
+
+<style>
+.belief-container {
+    max-width: 800px;
+    margin: 2.5rem auto;
+}
+
+.belief-container h3 {
+    color: #2c3e50;
+    margin-bottom: 1.25rem;
+}
+
+.belief-container p {
+    color: #444;
+    margin-bottom: 0.75rem;
+}
+
+.form-section {
+    margin-top: 1.5rem;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.form-group label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+{% next_button %}
+{% endblock %}
+

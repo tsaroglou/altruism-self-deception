@@ -1,0 +1,144 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Final Questions{% endblock %}
+
+{% block content %}
+<div class="questionnaire-container">
+    <h3>Final questions</h3>
+
+    <p>
+        Please answer the following questions about yourself and your experience in this experiment.
+    </p>
+
+    <div class="form-section">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="id_age">Age</label>
+                {{ form.age }}
+            </div>
+            <div class="form-group col-md-8">
+                <label>Gender / sex</label>
+                {{ form.gender_sex }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Highest completed education</label>
+            {{ form.education_level }}
+        </div>
+
+        <div class="form-group">
+            <label>Employment / student status</label>
+            {{ form.employment_status }}
+        </div>
+
+        <div class="form-group">
+            <label>If you are currently a student: which education level?</label>
+            {{ form.student_level }}
+        </div>
+
+        <div class="form-group">
+            <label>Field of study (please write, or N/A)</label>
+            {{ form.field_of_study }}
+        </div>
+
+        <hr>
+
+        <div class="form-group">
+            <label>{{ form.self_altruism.label }}</label>
+            <p class="scale-caption">(1 = not at all altruistic, 6 = very altruistic)</p>
+            <div class="likert-row">{{ form.self_altruism }}</div>
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.donate_frequency.label }}</label>
+            <p class="scale-caption">(1 = never, 6 = very often)</p>
+            <div class="likert-row">{{ form.donate_frequency }}</div>
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.task_difficulty.label }}</label>
+            <p class="scale-caption">(1 = very easy, 6 = very difficult)</p>
+            <div class="likert-row">{{ form.task_difficulty }}</div>
+        </div>
+
+        <div class="form-group">
+            <label>{{ form.study_purpose.label }}</label>
+            {{ form.study_purpose }}
+        </div>
+    </div>
+</div>
+
+<style>
+.questionnaire-container {
+    max-width: 800px;
+    margin: 2.5rem auto;
+}
+
+.questionnaire-container h3 {
+    color: #2c3e50;
+    margin-bottom: 1.25rem;
+}
+
+.questionnaire-container p {
+    color: #444;
+}
+
+.form-section {
+    margin-top: 1.5rem;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.scale-caption {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+/* Likert (1-6) horizontal radio styling */
+.likert-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.75rem;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+.likert-row .form-check {
+    margin: 0;
+}
+
+.likert-row label {
+    margin: 0;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.likert-row input[type="radio"] {
+    margin-right: 0.25rem;
+}
+
+.likert-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.4rem;
+    padding: 0 0.25rem;
+}
+</style>
+
+{% next_button %}
+{% endblock %}
+

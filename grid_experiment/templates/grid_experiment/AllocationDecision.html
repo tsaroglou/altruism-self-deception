@@ -15,13 +15,13 @@
     </div>
 
     <div class="scenario-action-container">
-        <!-- Left: Scenario X (always) -->
-        <div class="scenario-column {% if chosen_scenario_symbol != 'X' %}scenario-column-disabled{% endif %}">
+        <!-- Left: Scenario O (always) -->
+        <div class="scenario-column {% if chosen_scenario_symbol != 'O' %}scenario-column-disabled{% endif %}">
             <div class="scenario-header">
-                <span class="scenario-header-title">Scenario X</span>
+                <span class="scenario-header-title">Scenario O</span>
             </div>
             <div class="actions-vertical">
-                {% if chosen_scenario_symbol == 'X' %}
+                {% if chosen_scenario_symbol == 'O' %}
                 <label class="action-button-label">
                     <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
                     <div class="action-button-content">
@@ -89,13 +89,13 @@
             </div>
         </div>
 
-        <!-- Right: Scenario O (always) -->
-        <div class="scenario-column {% if chosen_scenario_symbol != 'O' %}scenario-column-disabled{% endif %}">
+        <!-- Right: Scenario I (always) -->
+        <div class="scenario-column {% if chosen_scenario_symbol != 'I' %}scenario-column-disabled{% endif %}">
             <div class="scenario-header">
-                <span class="scenario-header-title">Scenario O</span>
+                <span class="scenario-header-title">Scenario I</span>
             </div>
             <div class="actions-vertical">
-                {% if chosen_scenario_symbol == 'O' %}
+                {% if chosen_scenario_symbol == 'I' %}
                 <label class="action-button-label">
                     <input type="radio" name="action_choice" value="A" id="id_action_choice_0" required>
                     <div class="action-button-content">

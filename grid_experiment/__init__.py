@@ -3,15 +3,15 @@ import random
 
 
 doc = """
-Altruism & self-deception experiment with X/O grid stimuli.
+Altruism & self-deception experiment with O/I grid stimuli.
 """
 
 
 class Constants(BaseConstants):
     name_in_url = "grid_experiment"
     players_per_group = None
-    # 4 trial rounds (with feedback) + 24 main rounds (for payment)
-    num_rounds = 28
+    # 4 trial rounds (with feedback) + 28 main rounds (for payment)
+    num_rounds = 32
     grid_rows = 7
     grid_cols = 7
     total_cells = grid_rows * grid_cols
@@ -54,7 +54,7 @@ def get_current_plan(player):
 def ensure_participant_setup(player):
     participant = player.participant
     if "moral_symbol" not in participant.vars or "win_symbol" not in participant.vars:
-        moral_symbol, win_symbol = random.choice([("X", "O"), ("O", "X")])
+        moral_symbol, win_symbol = random.choice([("O", "I"), ("I", "O")])
         participant.vars["moral_symbol"] = moral_symbol
         participant.vars["win_symbol"] = win_symbol
     moral_symbol = participant.vars["moral_symbol"]
@@ -73,14 +73,14 @@ def ensure_round_state(player):
         player.actual_scenario = plan["scenario"]
         player.difficulty = plan["difficulty"]
         player.majority_symbol = plan["majority_symbol"]
-        player.minority_symbol = "O" if player.majority_symbol == "X" else "X"
+        player.minority_symbol = "I" if player.majority_symbol == "O" else "O"
         player.majority_count = plan["majority_count"]
         player.minority_count = Constants.total_cells - player.majority_count
         player.grid_pattern = plan["pattern"]
 
 
 def make_grid_pattern(majority_symbol: str, majority_count: int) -> str:
-    minority_symbol = "O" if majority_symbol == "X" else "X"
+    minority_symbol = "I" if majority_symbol == "O" else "O"
     minority_count = Constants.total_cells - majority_count
     cells = [majority_symbol] * majority_count + [minority_symbol] * minority_count
     random.shuffle(cells)
@@ -98,24 +98,24 @@ def build_trial_plan(moral_symbol: str, win_symbol: str):
     """
     Build trial plan with:
     - 4 fixed trial rounds (practice, with feedback)
-    - 24 main rounds (for payment) with specified X/O counts
+    - 28 main rounds (for payment) with specified O/I counts
     """
     plan = []
 
     # Helper to add a single round config
-    def add_round(x_count: int, o_count: int, is_trial: bool):
-        if x_count + o_count != Constants.total_cells:
-            raise ValueError("X and O counts must sum to total_cells")
-        if x_count > o_count:
-            majority_symbol = "X"
-            majority_count = x_count
-        elif o_count > x_count:
+    def add_round(o_count: int, i_count: int, is_trial: bool):
+        if o_count + i_count != Constants.total_cells:
+            raise ValueError("O and I counts must sum to total_cells")
+        if o_count > i_count:
             majority_symbol = "O"
             majority_count = o_count
+        elif i_count > o_count:
+            majority_symbol = "I"
+            majority_count = i_count
         else:
             # Tie should not happen with odd grid size, but guard anyway
-            majority_symbol = random.choice(["X", "O"])
-            majority_count = x_count
+            majority_symbol = random.choice(["O", "I"])
+            majority_count = o_count
 
         # Determine scenario from which symbol is majority in this round
         if majority_symbol == moral_symbol:
@@ -147,37 +147,35 @@ def build_trial_plan(moral_symbol: str, win_symbol: str):
     for x_count, o_count in trial_pairs:
         add_round(x_count, o_count, is_trial=True)
 
-    # MAIN ROUNDS (for payment) - 24 rounds with specified X/O counts
+    # MAIN ROUNDS (for payment) - 28 rounds with specified O/I counts
     main_pairs = []
 
     # Extreme cases: 49-0 and 0-49, 2 times each
     main_pairs.extend([(49, 0)] * 2)
     main_pairs.extend([(0, 49)] * 2)
 
-    # Mid-range cases (X - O) as provided (adjusted so X+O = 49)
-    # Keep only the harder levels (majority counts 29 down to 25)
-    base_mid_x_o = [
-        (20, 29),
+    # Mid-range cases (O - I) as provided (adjusted so O+I = 49)
+    # Keep only the harder levels (majority counts 28 down to 25)
+    base_mid_o = [
         (21, 28),
         (22, 27),
         (23, 26),
         (24, 25),
     ]
-    # Mirror cases (X - O) where previously O was majority (adjusted so X+O = 49)
-    base_mid_o_x = [
-        (29, 20),
+    # Mirror cases (O - I) where previously I was majority (adjusted so O+I = 49)
+    base_mid_i = [
         (28, 21),
         (27, 22),
         (26, 23),
         (25, 24),
     ]
-    # Use each remaining difficulty level twice (per orientation)
-    for _ in range(2):
-        main_pairs.extend(base_mid_x_o)
-        main_pairs.extend(base_mid_o_x)
+    # Use each remaining difficulty level three times (per orientation)
+    for _ in range(3):
+        main_pairs.extend(base_mid_o)
+        main_pairs.extend(base_mid_i)
 
-    if len(main_pairs) != 24:
-        raise ValueError("Expected 24 main-round configurations")
+    if len(main_pairs) != 28:
+        raise ValueError("Expected 28 main-round configurations")
 
     # Randomize order of main rounds
     random.shuffle(main_pairs)
@@ -216,7 +214,7 @@ class Player(BasePlayer):
     grid_pattern = models.LongStringField()
 
     reported_symbol = models.StringField(
-        choices=[("X", "X"), ("O", "O")], widget=widgets.RadioSelect
+        choices=[("O", "O"), ("I", "I")], widget=widgets.RadioSelect
     )
     view_again_count = models.IntegerField(initial=0)
     # Reaction time (in seconds) for reporting the scenario symbol on the Interpretation page
@@ -228,9 +226,93 @@ class Player(BasePlayer):
     # Reaction time (in seconds) for choosing an action on the AllocationDecision page
     action_choice_rt = models.FloatField()
 
-    # Accuracy rate in the 20 non-extreme main rounds
+    # Accuracy rate in the non-extreme main rounds
     # (computed and stored on the final round only; not shown to participants)
     mid_main_accuracy = models.FloatField()
+
+    # Belief about main-task identification accuracy (number of correct identifications out of 24)
+    belief_identification_correct_count = models.IntegerField(blank=True)
+    # Bonus for a correct belief about identification accuracy (paid regardless of which round is selected)
+    belief_bonus = models.CurrencyField(initial=cu(0))
+
+    # Demographics & questionnaire (asked at the end of the experiment)
+    age = models.IntegerField(blank=True, min=0, max=120)
+    gender_sex = models.StringField(
+        blank=True,
+        choices=[
+            ("female", "Female"),
+            ("male", "Male"),
+            ("nonbinary", "Non-binary / other"),
+            ("prefer_not_say", "Prefer not to say"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    education_level = models.StringField(
+        blank=True,
+        choices=[
+            ("less_than_high_school", "Less than high school"),
+            ("high_school", "High school"),
+            ("some_college", "Some college / vocational training"),
+            ("bachelor", "Bachelor's degree"),
+            ("master", "Master's degree"),
+            ("doctorate", "Doctorate or equivalent"),
+            ("other", "Other"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    employment_status = models.StringField(
+        blank=True,
+        choices=[
+            ("full_time", "Employed full-time"),
+            ("part_time", "Employed part-time"),
+            ("self_employed", "Self-employed"),
+            ("unemployed", "Unemployed"),
+            ("student", "Student"),
+            ("other", "Other"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    student_level = models.StringField(
+        blank=True,
+        choices=[
+            ("none", "Not currently a student"),
+            ("high_school", "High school"),
+            ("bachelor", "Bachelor's level"),
+            ("master", "Master's level"),
+            ("doctorate", "Doctoral level"),
+            ("other", "Other"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    field_of_study = models.StringField(blank=True)
+    self_altruism = models.IntegerField(
+        blank=True,
+        min=1,
+        max=6,
+        label="How altruistic do you consider yourself to be?",
+        choices=[[i, str(i)] for i in range(1, 7)],
+        widget=widgets.RadioSelect,
+    )
+    donate_frequency = models.IntegerField(
+        blank=True,
+        min=1,
+        max=6,
+        label="How often do you donate to charity?",
+        choices=[[i, str(i)] for i in range(1, 7)],
+        widget=widgets.RadioSelect,
+    )
+    task_difficulty = models.IntegerField(
+        blank=True,
+        min=1,
+        max=6,
+        label="How difficult did you find the symbol task in this experiment?",
+        choices=[[i, str(i)] for i in range(1, 7)],
+        widget=widgets.RadioSelect,
+    )
+    study_purpose = models.LongStringField(
+        blank=True,
+        label="What do you think this study was about? (max. 50 words)",
+    )
 
     identification_correct = models.BooleanField(initial=False)
     identification_bonus_awarded = models.CurrencyField(initial=cu(0))
@@ -480,7 +562,7 @@ class Interpretation(Page):
 
     @staticmethod
     def error_message(player: Player, values):
-        if values["reported_symbol"] not in {"X", "O"}:
+        if values["reported_symbol"] not in {"O", "I"}:
             return "Please select which symbol you believe appeared more often."
 
     @staticmethod
@@ -580,10 +662,10 @@ class RoundSummary(Page):
         else:
             base_payoff = cu(0)
         
-        x_was_chosen = (reported_symbol == "X")
-        o_was_chosen = (reported_symbol == "O")
-        x_was_correct = x_was_chosen and (player.majority_symbol == "X")
-        o_was_correct = o_was_chosen and (player.majority_symbol == "O")
+        x_was_chosen = (reported_symbol == "O")
+        o_was_chosen = (reported_symbol == "I")
+        x_was_correct = x_was_chosen and (player.majority_symbol == "O")
+        o_was_correct = o_was_chosen and (player.majority_symbol == "I")
         
         return dict(
             identification_correct=player.identification_correct,
@@ -642,7 +724,7 @@ class FinalPage(Page):
                 payment_charity_payoff=None,
             )
 
-        # Compute accuracy in the 20 non-extreme main rounds (majority_count < 49)
+        # Compute accuracy in the non-extreme main rounds (majority_count < 49)
         # and store it for export (on the final-round player and in participant.vars).
         main_round_players = player.in_rounds(5, Constants.num_rounds)
         mid_round_players = [
@@ -662,8 +744,12 @@ class FinalPage(Page):
         if "paying_round_number" in pvars:
             paying_round_number = pvars["paying_round_number"]
         else:
+            # Fallback: derive a deterministic paying round from participant.code
+            # (so even if participant.vars is not persisted in this request context,
+            # refreshing the page will not change the selected round).
             main_round_numbers = list(range(5, Constants.num_rounds + 1))
-            paying_round_number = random.choice(main_round_numbers)
+            seeded_rng = random.Random(player.participant.code)
+            paying_round_number = seeded_rng.choice(main_round_numbers)
             pvars["paying_round_number"] = paying_round_number
         # Get this player's record in the chosen paying round
         payment_player = player.in_round(paying_round_number)
@@ -674,6 +760,80 @@ class FinalPage(Page):
             payment_player_payoff=payment_player.payoff,
             payment_charity_payoff=payment_player.charity_payoff,
         )
+
+
+class BeliefAccuracy(Page):
+    form_model = "player"
+    form_fields = ["belief_identification_correct_count"]
+
+    @staticmethod
+    def is_displayed(player: Player):
+        pvars = player.participant.vars
+        consent_ok = pvars.get("consent") == "yes"
+        comp_failed = pvars.get("comp_failed", False)
+        return consent_ok and not comp_failed and player.round_number == Constants.num_rounds
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        total_main_rounds = Constants.num_rounds - 4  # main rounds (5..num_rounds)
+        return dict(
+            total_main_rounds=total_main_rounds,
+        )
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        # Compute true number of correct identifications in main-task rounds (5..num_rounds)
+        main_round_players = player.in_rounds(5, Constants.num_rounds)
+        correct_count = sum(1 for p in main_round_players if p.identification_correct)
+        guess = player.field_maybe_none("belief_identification_correct_count")
+        if guess is None:
+            guess = -1
+        if guess == correct_count:
+            player.belief_bonus = cu(5)
+        else:
+            player.belief_bonus = cu(0)
+        pvars = player.participant.vars
+        pvars["belief_correct_main_identifications"] = correct_count
+        pvars["belief_identification_guess"] = guess
+        pvars["belief_bonus"] = player.belief_bonus
+
+
+class Questionnaire(Page):
+    form_model = "player"
+    form_fields = [
+        "age",
+        "gender_sex",
+        "education_level",
+        "employment_status",
+        "student_level",
+        "field_of_study",
+        "self_altruism",
+        "donate_frequency",
+        "task_difficulty",
+        "study_purpose",
+    ]
+
+    @staticmethod
+    def is_displayed(player: Player):
+        # Show to all who completed the study (including those who failed comprehension)
+        return (
+            player.participant.vars.get("consent") == "yes"
+            and player.round_number == Constants.num_rounds
+        )
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        """
+        Persist any end-of-experiment draws (e.g. payment round) on POST so they
+        do not change if FinalPage is refreshed.
+        """
+        pvars = player.participant.vars
+        comp_failed = pvars.get("comp_failed", False)
+        if comp_failed:
+            return
+        if "paying_round_number" not in pvars:
+            main_round_numbers = list(range(5, Constants.num_rounds + 1))
+            pvars["paying_round_number"] = random.choice(main_round_numbers)
 
 
 class ComprehensionTest1(Page):
@@ -806,6 +966,8 @@ page_sequence = [
     ComprehensionFailNotice,
     ComprehensionTest2,
     ComprehensionPassNotice,
+    BeliefAccuracy,
+    Questionnaire,
     FinalPage,
 ]
 
