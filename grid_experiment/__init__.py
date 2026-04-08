@@ -1,6 +1,5 @@
 from otree.api import *
 import random
-import time
 
 
 doc = """
@@ -57,34 +56,6 @@ def beyond_plan(player):
     """True if this round has no plan entry (i.e. we are past the test-mode limit)."""
     plan_list = player.participant.vars.get("trial_plan", [])
     return player.round_number > len(plan_list)
-
-
-# ---------------------------------------------------------------------------
-# 10-minute experiment-wide timer helpers
-# ---------------------------------------------------------------------------
-EXPERIMENT_TIMEOUT_SECONDS = 600  # 10 minutes
-
-
-def set_deadline(player):
-    """Record the deadline timestamp on the participant (only once)."""
-    if "deadline" not in player.participant.vars:
-        player.participant.vars["deadline"] = time.time() + EXPERIMENT_TIMEOUT_SECONDS
-
-
-def get_remaining_seconds(player):
-    """Return seconds left until the participant's deadline, or None if not set."""
-    deadline = player.participant.vars.get("deadline")
-    if deadline is None:
-        return None
-    remaining = int(deadline - time.time())
-    return max(1, remaining)
-
-
-def handle_timeout(player, timeout_happened):
-    """Mark participant as timed out and zero their payoff."""
-    if timeout_happened and not player.participant.vars.get("timed_out", False):
-        player.participant.vars["timed_out"] = True
-        player.participant.payoff = cu(0)
 
 
 def get_current_plan(player):
@@ -506,9 +477,6 @@ class Consent(Page):
     def before_next_page(player: Player, timeout_happened):
         # Store consent at the participant level so it is available in all rounds
         player.participant.vars["consent"] = player.consent
-        # Start the 10-minute countdown as soon as the participant consents
-        if player.consent == "yes":
-            set_deadline(player)
 
 
 class NoConsent(Page):
@@ -531,16 +499,7 @@ class Introduction(Page):
         return (
             player.round_number == 1
             and player.participant.vars.get("consent") == "yes"
-            and not player.participant.vars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -568,16 +527,7 @@ class MappingInfo(Page):
         return (
             player.round_number == 1
             and player.participant.vars.get("consent") == "yes"
-            and not player.participant.vars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -607,8 +557,7 @@ class Stimulus(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        timed_out = player.participant.vars.get("timed_out", False)
-        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
+        if not consent_ok or comp_failed or beyond_plan(player):
             return False
         if player.round_number <= 4:
             return True
@@ -665,20 +614,11 @@ class Interpretation(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        timed_out = player.participant.vars.get("timed_out", False)
-        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
+        if not consent_ok or comp_failed or beyond_plan(player):
             return False
         if player.round_number <= 4:
             return True
         return comp_passed
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
 
 class AllocationDecision(Page):
@@ -690,16 +630,11 @@ class AllocationDecision(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        timed_out = player.participant.vars.get("timed_out", False)
-        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
+        if not consent_ok or comp_failed or beyond_plan(player):
             return False
         if player.round_number <= 4:
             return True
         return comp_passed
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -743,7 +678,6 @@ class AllocationDecision(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
         player.set_outcomes()
 
 
@@ -754,16 +688,7 @@ class RoundSummary(Page):
         return (
             player.participant.vars.get("consent") == "yes"
             and player.round_number <= 4
-            and not player.participant.vars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -806,29 +731,12 @@ class RoundSummary(Page):
         )
 
 
-class TimedOut(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return (
-            player.round_number == last_round(player)
-            and player.participant.vars.get("timed_out", False)
-        )
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        participation_fee = player.session.config.get("participation_fee", 5.00)
-        player.participant.payoff = cu(0)
-        return dict(participation_fee=f"{float(participation_fee):.2f}")
-
-
 class FinalPage(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return (
-            player.round_number == last_round(player)
-            and player.participant.vars.get("consent") == "yes"
-            and not player.participant.vars.get("timed_out", False)
-        )
+        return player.round_number == last_round(player) and player.participant.vars.get(
+            "consent"
+        ) == "yes"
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -907,12 +815,7 @@ class BeliefAccuracy(Page):
         pvars = player.participant.vars
         consent_ok = pvars.get("consent") == "yes"
         comp_failed = pvars.get("comp_failed", False)
-        timed_out = pvars.get("timed_out", False)
-        return consent_ok and not comp_failed and not timed_out and player.round_number == last_round(player)
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
+        return consent_ok and not comp_failed and player.round_number == last_round(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -923,9 +826,6 @@ class BeliefAccuracy(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
-        if player.participant.vars.get("timed_out", False):
-            return
         # Compute true number of correct identifications in main-task rounds
         main_round_players = player.in_rounds(5, last_round(player))
         correct_count = sum(1 for p in main_round_players if p.identification_correct)
@@ -964,19 +864,13 @@ class Questionnaire(Page):
             pvars.get("consent") == "yes"
             and player.round_number == last_round(player)
             and not pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
 
     @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
         pvars = player.participant.vars
         comp_failed = pvars.get("comp_failed", False)
-        if comp_failed or pvars.get("timed_out", False):
+        if comp_failed:
             return
         if "paying_round_number" not in pvars:
             main_round_numbers = list(range(5, last_round(player) + 1))
@@ -995,12 +889,7 @@ class ComprehensionTest1(Page):
             and player.round_number == 4
             and not pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -1017,9 +906,6 @@ class ComprehensionTest1(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
-        if player.participant.vars.get("timed_out", False):
-            return
         pvars = player.participant.vars
         correct_answers = {
             "comp1_q1": "true_scenario",
@@ -1052,12 +938,7 @@ class ComprehensionTest2(Page):
             and pvars.get("needs_second_test", False)
             and not pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -1074,9 +955,6 @@ class ComprehensionTest2(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
-        if player.participant.vars.get("timed_out", False):
-            return
         pvars = player.participant.vars
         correct_answers = {
             "comp2_q1": "true_scenario",
@@ -1105,16 +983,7 @@ class ComprehensionFailNotice(Page):
             and pvars.get("needs_second_test", False)
             and not pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -1173,7 +1042,6 @@ class ComprehensionFinalFail(Page):
             pvars.get("consent") == "yes"
             and player.round_number == 4
             and pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
 
 
@@ -1186,16 +1054,7 @@ class ComprehensionPassNotice(Page):
             and player.round_number == 4
             and pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
-            and not pvars.get("timed_out", False)
         )
-
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return get_remaining_seconds(player)
-
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        handle_timeout(player, timeout_happened)
 
 
 page_sequence = [
@@ -1214,7 +1073,6 @@ page_sequence = [
     ComprehensionPassNotice,
     BeliefAccuracy,
     Questionnaire,
-    TimedOut,
     FinalPage,
 ]
 
