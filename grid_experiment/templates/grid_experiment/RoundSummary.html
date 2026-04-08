@@ -58,11 +58,11 @@
                     <span class="payoff-amount">Action {{ action_choice }}</span>
                 </div>
                 <div class="payoff-item">
-                    <span class="payoff-label">Charity points:</span>
+                    <span class="payoff-label">Charity earnings:</span>
                     <span class="payoff-amount charity">{{ charity_payoff }}</span>
                 </div>
                 <div class="payoff-item total">
-                    <span class="payoff-label">Your points:</span>
+                    <span class="payoff-label">Your earnings:</span>
                     <span class="payoff-amount total-amount">{{ base_payoff }}</span>
                 </div>
             </div>
@@ -91,23 +91,10 @@
                 {% if identification_correct %}
                     <div class="bonus-info">
                         You received the identification bonus (<strong>+{{ identification_bonus }}</strong>).
-                        {% if view_again_cost > 0 %}
-                            After subtracting the viewing cost of {{ view_again_cost }}, your net bonus this round is
-                            <strong>{{ net_identification_bonus }}</strong>.
-                        {% endif %}
                     </div>
                 {% else %}
                     <div class="bonus-info">You did not receive the identification bonus this round.</div>
                 {% endif %}
-            </div>
-            
-            <div class="view-again-hidden" style="display:none;">
-            {% if view_again_cost > 0 and view_again_count > 0 %}
-            <div class="cost-box">
-                <strong>View Again Cost:</strong> −{{ view_again_cost }}
-                <span class="cost-detail">({{ view_again_count }} {{ view_again_label }}, {{ view_again_unit_cost }} each)</span>
-            </div>
-            {% endif %}
             </div>
         </div>
 
@@ -238,20 +225,6 @@
     opacity: 0.9;
 }
 
-.cost-detail {
-    font-size: 0.85rem;
-    opacity: 0.8;
-    margin-left: 0.5rem;
-}
-
-.cost-box {
-    background-color: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-    padding: 0.75rem 1rem;
-    color: #856404;
-    font-size: 0.95rem;
-}
 
 .payoff-display {
     background-color: white;

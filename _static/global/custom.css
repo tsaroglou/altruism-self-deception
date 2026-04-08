@@ -1,0 +1,41 @@
+/* ============================================================
+   Global layout overrides — applied to every page
+   ============================================================ */
+
+/* Widen the main Bootstrap container that oTree wraps pages in */
+.container, .container-lg, .container-xl {
+    max-width: 1060px !important;
+}
+
+/* Page-level wrappers used in the experiment's own templates */
+.welcome-container,
+.final-container,
+.q-container,
+.belief-container,
+.questionnaire-container,
+.instructions-section {
+    max-width: 960px !important;
+}
+
+/* Next-button: left-align it with the content */
+.otree-btn-next {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+/* Make the Next button itself match the experiment's blue */
+.otree-btn-next .btn-primary,
+button[type="submit"].btn-primary {
+    background-color: #3498db;
+    border-color: #2980b9;
+    padding: 0.55rem 2.2rem;
+    font-size: 1rem;
+    border-radius: 6px;
+}
+
+.otree-btn-next .btn-primary:hover,
+button[type="submit"].btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2471a3;
+}

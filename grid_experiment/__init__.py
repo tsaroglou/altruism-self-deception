@@ -1,5 +1,6 @@
 from otree.api import *
 import random
+import time
 
 
 doc = """
@@ -18,7 +19,6 @@ class Constants(BaseConstants):
     # 15 difficulty levels: majority counts from 25 (hardest) to 39 (easiest)
     difficulty_levels = [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
     identification_bonus = cu(1)
-    view_again_cost = cu(0.5)
     payoffs = {
         "win_win": {
             "A": {"player": cu(7), "charity": cu(5)},
@@ -31,10 +31,6 @@ class Constants(BaseConstants):
     }
 
 
-def get_view_again_cost(player):
-    return Constants.view_again_cost
-
-
 def scenario_label(symbol: str) -> str:
     return f"Scenario {symbol}"
 
@@ -45,6 +41,52 @@ def scenario_symbol_for(player, scenario_name: str) -> str:
     return player.participant.vars["win_symbol"]
 
 
+def is_test_mode(player):
+    return player.session.config.get("test_mode", False)
+
+
+def num_main_rounds(player):
+    return 2 if is_test_mode(player) else 28
+
+
+def last_round(player):
+    return 4 + num_main_rounds(player)
+
+
+def beyond_plan(player):
+    """True if this round has no plan entry (i.e. we are past the test-mode limit)."""
+    plan_list = player.participant.vars.get("trial_plan", [])
+    return player.round_number > len(plan_list)
+
+
+# ---------------------------------------------------------------------------
+# 10-minute experiment-wide timer helpers
+# ---------------------------------------------------------------------------
+EXPERIMENT_TIMEOUT_SECONDS = 600  # 10 minutes
+
+
+def set_deadline(player):
+    """Record the deadline timestamp on the participant (only once)."""
+    if "deadline" not in player.participant.vars:
+        player.participant.vars["deadline"] = time.time() + EXPERIMENT_TIMEOUT_SECONDS
+
+
+def get_remaining_seconds(player):
+    """Return seconds left until the participant's deadline, or None if not set."""
+    deadline = player.participant.vars.get("deadline")
+    if deadline is None:
+        return None
+    remaining = int(deadline - time.time())
+    return max(1, remaining)
+
+
+def handle_timeout(player, timeout_happened):
+    """Mark participant as timed out and zero their payoff."""
+    if timeout_happened and not player.participant.vars.get("timed_out", False):
+        player.participant.vars["timed_out"] = True
+        player.participant.payoff = cu(0)
+
+
 def get_current_plan(player):
     ensure_participant_setup(player)
     plan_list = player.participant.vars["trial_plan"]
@@ -52,6 +94,7 @@ def get_current_plan(player):
 
 
 def ensure_participant_setup(player):
+    """Set up participant-level vars and return (moral_symbol, win_symbol)."""
     participant = player.participant
     if "moral_symbol" not in participant.vars or "win_symbol" not in participant.vars:
         moral_symbol, win_symbol = random.choice([("O", "I"), ("I", "O")])
@@ -60,14 +103,17 @@ def ensure_participant_setup(player):
     moral_symbol = participant.vars["moral_symbol"]
     win_symbol = participant.vars["win_symbol"]
 
-    participant.vars["view_again_cost"] = get_view_again_cost(player)
-
     if "trial_plan" not in participant.vars:
-        participant.vars["trial_plan"] = build_trial_plan(moral_symbol, win_symbol)
+        n_main = 2 if player.session.config.get("test_mode", False) else 28
+        participant.vars["trial_plan"] = build_trial_plan(moral_symbol, win_symbol, n_main)
+
+    return moral_symbol, win_symbol
 
 
 def ensure_round_state(player):
     ensure_participant_setup(player)
+    if beyond_plan(player):
+        return
     if player.field_maybe_none("grid_pattern") is None:
         plan = get_current_plan(player)
         player.actual_scenario = plan["scenario"]
@@ -94,11 +140,11 @@ def to_rows(pattern: str):
     ]
 
 
-def build_trial_plan(moral_symbol: str, win_symbol: str):
+def build_trial_plan(moral_symbol: str, win_symbol: str, n_main: int = 28):
     """
     Build trial plan with:
     - 4 fixed trial rounds (practice, with feedback)
-    - 28 main rounds (for payment) with specified O/I counts
+    - n_main main rounds (28 normally, 2 in test mode)
     """
     plan = []
 
@@ -139,49 +185,52 @@ def build_trial_plan(moral_symbol: str, win_symbol: str):
 
     # 4 TRIAL ROUNDS (practice, non-paying)
     trial_pairs = [
-        (39, 10),  # 39 X, 10 O
-        (10, 39),  # 10 X, 39 O
-        (25, 24),  # 25 X, 24 O
-        (24, 25),  # 24 X, 25 O
+        (39, 10),  # 39 O, 10 I
+        (10, 39),  # 10 O, 39 I
+        (25, 24),  # 25 O, 24 I
+        (24, 25),  # 24 O, 25 I
     ]
-    for x_count, o_count in trial_pairs:
-        add_round(x_count, o_count, is_trial=True)
+    for o_count, i_count in trial_pairs:
+        add_round(o_count, i_count, is_trial=True)
 
-    # MAIN ROUNDS (for payment) - 28 rounds with specified O/I counts
+    # MAIN ROUNDS (for payment)
     main_pairs = []
 
-    # Extreme cases: 49-0 and 0-49, 2 times each
-    main_pairs.extend([(49, 0)] * 2)
-    main_pairs.extend([(0, 49)] * 2)
+    if n_main == 2:
+        # Test mode: one extreme O-majority, one extreme I-majority
+        main_pairs = [(49, 0), (0, 49)]
+    else:
+        # Extreme cases: 49-0 and 0-49, 2 times each
+        main_pairs.extend([(49, 0)] * 2)
+        main_pairs.extend([(0, 49)] * 2)
 
-    # Mid-range cases (O - I) as provided (adjusted so O+I = 49)
-    # Keep only the harder levels (majority counts 28 down to 25)
-    base_mid_o = [
-        (21, 28),
-        (22, 27),
-        (23, 26),
-        (24, 25),
-    ]
-    # Mirror cases (O - I) where previously I was majority (adjusted so O+I = 49)
-    base_mid_i = [
-        (28, 21),
-        (27, 22),
-        (26, 23),
-        (25, 24),
-    ]
-    # Use each remaining difficulty level three times (per orientation)
-    for _ in range(3):
-        main_pairs.extend(base_mid_o)
-        main_pairs.extend(base_mid_i)
+        # Mid-range cases (O - I) as provided (adjusted so O+I = 49)
+        base_mid_o = [
+            (21, 28),
+            (22, 27),
+            (23, 26),
+            (24, 25),
+        ]
+        # Mirror cases where I is majority
+        base_mid_i = [
+            (28, 21),
+            (27, 22),
+            (26, 23),
+            (25, 24),
+        ]
+        # Use each difficulty level three times (per orientation)
+        for _ in range(3):
+            main_pairs.extend(base_mid_o)
+            main_pairs.extend(base_mid_i)
 
-    if len(main_pairs) != 28:
-        raise ValueError("Expected 28 main-round configurations")
+    if len(main_pairs) != n_main:
+        raise ValueError(f"Expected {n_main} main-round configurations, got {len(main_pairs)}")
 
     # Randomize order of main rounds
     random.shuffle(main_pairs)
 
-    for x_count, o_count in main_pairs:
-        add_round(x_count, o_count, is_trial=False)
+    for o_count, i_count in main_pairs:
+        add_round(o_count, i_count, is_trial=False)
 
     return plan
 
@@ -189,12 +238,17 @@ def build_trial_plan(moral_symbol: str, win_symbol: str):
 class Subsession(BaseSubsession):
     def creating_session(self):
         for player in self.get_players():
-            ensure_participant_setup(player)
+            moral_symbol, _ = ensure_participant_setup(player)
+            player.treatment = "O_moral_conflict" if moral_symbol == "O" else "I_moral_conflict"
+            # In test mode, rounds beyond the plan length are skipped by is_displayed;
+            # skip setup here too to avoid IndexError.
+            if beyond_plan(player):
+                continue
             plan = get_current_plan(player)
             player.actual_scenario = plan["scenario"]
             player.difficulty = plan["difficulty"]
             player.majority_symbol = plan["majority_symbol"]
-            player.minority_symbol = "O" if player.majority_symbol == "X" else "X"
+            player.minority_symbol = "I" if player.majority_symbol == "O" else "O"
             player.majority_count = plan["majority_count"]
             player.minority_count = Constants.total_cells - player.majority_count
             player.grid_pattern = plan["pattern"]
@@ -216,7 +270,6 @@ class Player(BasePlayer):
     reported_symbol = models.StringField(
         choices=[("O", "O"), ("I", "I")], widget=widgets.RadioSelect
     )
-    view_again_count = models.IntegerField(initial=0)
     # Reaction time (in seconds) for reporting the scenario symbol on the Interpretation page
     reported_symbol_rt = models.FloatField()
 
@@ -231,12 +284,12 @@ class Player(BasePlayer):
     mid_main_accuracy = models.FloatField()
 
     # Belief about main-task identification accuracy (number of correct identifications out of 24)
-    belief_identification_correct_count = models.IntegerField(blank=True)
+    belief_identification_correct_count = models.IntegerField(min=0)
     # Bonus for a correct belief about identification accuracy (paid regardless of which round is selected)
     belief_bonus = models.CurrencyField(initial=cu(0))
 
     # Demographics & questionnaire (asked at the end of the experiment)
-    age = models.IntegerField(blank=True, min=0, max=120)
+    age = models.IntegerField(blank=True, min=18, max=99)
     gender_sex = models.StringField(
         blank=True,
         choices=[
@@ -245,7 +298,6 @@ class Player(BasePlayer):
             ("nonbinary", "Non-binary / other"),
             ("prefer_not_say", "Prefer not to say"),
         ],
-        widget=widgets.RadioSelect,
     )
     education_level = models.StringField(
         blank=True,
@@ -258,19 +310,19 @@ class Player(BasePlayer):
             ("doctorate", "Doctorate or equivalent"),
             ("other", "Other"),
         ],
-        widget=widgets.RadioSelect,
     )
     employment_status = models.StringField(
         blank=True,
         choices=[
             ("full_time", "Employed full-time"),
+            ("full_time_student", "Employed full-time, Student"),
             ("part_time", "Employed part-time"),
+            ("part_time_student", "Employed part-time, Student"),
             ("self_employed", "Self-employed"),
             ("unemployed", "Unemployed"),
             ("student", "Student"),
             ("other", "Other"),
         ],
-        widget=widgets.RadioSelect,
     )
     student_level = models.StringField(
         blank=True,
@@ -282,9 +334,26 @@ class Player(BasePlayer):
             ("doctorate", "Doctoral level"),
             ("other", "Other"),
         ],
-        widget=widgets.RadioSelect,
     )
-    field_of_study = models.StringField(blank=True)
+    field_of_study = models.StringField(
+        blank=True,
+        choices=[
+            ("economics_business", "Economics / Business"),
+            ("law", "Law"),
+            ("psychology", "Psychology / Cognitive Science"),
+            ("political_science", "Political Science / International Relations"),
+            ("philosophy", "Philosophy / Ethics"),
+            ("medicine_health", "Medicine / Health Sciences"),
+            ("engineering_cs", "Engineering / Computer Science"),
+            ("natural_sciences", "Natural Sciences (Physics, Chemistry, Biology)"),
+            ("mathematics_statistics", "Mathematics / Statistics"),
+            ("humanities", "Humanities (History, Literature, Languages)"),
+            ("social_sciences", "Social Sciences (Sociology, Anthropology)"),
+            ("education", "Education"),
+            ("arts_design", "Arts / Design"),
+            ("other", "Other"),
+        ],
+    )
     self_altruism = models.IntegerField(
         blank=True,
         min=1,
@@ -314,10 +383,11 @@ class Player(BasePlayer):
         label="What do you think this study was about? (max. 50 words)",
     )
 
+    # Treatment assignment: "O_moral_conflict" or "I_moral_conflict"
+    treatment = models.StringField(initial="")
+
     identification_correct = models.BooleanField(initial=False)
     identification_bonus_awarded = models.CurrencyField(initial=cu(0))
-    net_identification_bonus = models.CurrencyField(initial=cu(0))
-    view_again_cost_applied = models.CurrencyField(initial=cu(0))
     charity_payoff = models.CurrencyField(initial=cu(0))
     consent = models.StringField(
         choices=[("yes", "I consent to participate"), ("no", "I do not consent")],
@@ -326,43 +396,52 @@ class Player(BasePlayer):
     # Comprehension test answers (multiple choice)
     comp1_q1 = models.StringField(
         choices=[
-            ("true_scenario", "The true active scenario (Scenario X or O)"),
-            ("reported_scenario", "The scenario I reported"),
+            ("true_scenario", "The true active scenario, Scenario O"),
+            ("reported_scenario", "The scenario I reported, Scenario I"),
         ],
         widget=widgets.RadioSelect,
     )
     comp1_q2 = models.StringField(
         choices=[
-            ("scenario_x", "Scenario X"),
             ("scenario_o", "Scenario O"),
+            ("scenario_i", "Scenario I"),
         ],
         widget=widgets.RadioSelect,
     )
     comp1_q3 = models.StringField(
         choices=[
+            ("scenario_i", "Scenario I"),
             ("scenario_o", "Scenario O"),
-            ("scenario_x", "Scenario X"),
         ],
         widget=widgets.RadioSelect,
     )
     comp1_q4 = models.StringField(
         choices=[
-            ("true_scenario", "The true active scenario determined by the grid"),
-            ("reported_scenario", "The scenario I reported"),
+            ("action_a_always_better", "Action A always gives me more than Action B, regardless of which scenario is active."),
+            ("depends_on_scenario", "Which action gives me more depends on which scenario is active."),
+            ("action_b_always_better", "Action B always gives me more than Action A, regardless of which scenario is active."),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp1_q5 = models.StringField(
+        choices=[
+            ("charity_a_both", "Action A, in both scenarios"),
+            ("charity_b_both", "Action B, in both scenarios"),
+            ("charity_depends_scenario", "It depends on which scenario is active"),
         ],
         widget=widgets.RadioSelect,
     )
 
     comp2_q1 = models.StringField(
         choices=[
-            ("true_scenario", "The true active scenario (Scenario X or O)"),
-            ("reported_scenario", "The scenario I reported"),
+            ("true_scenario", "The true active scenario, Scenario I"),
+            ("reported_scenario", "The scenario I reported, Scenario O"),
         ],
         widget=widgets.RadioSelect,
     )
     comp2_q2 = models.StringField(
         choices=[
-            ("scenario_x", "Scenario X"),
+            ("scenario_i", "Scenario I"),
             ("scenario_o", "Scenario O"),
         ],
         widget=widgets.RadioSelect,
@@ -370,14 +449,21 @@ class Player(BasePlayer):
     comp2_q3 = models.StringField(
         choices=[
             ("scenario_o", "Scenario O"),
-            ("scenario_x", "Scenario X"),
+            ("scenario_i", "Scenario I"),
         ],
         widget=widgets.RadioSelect,
     )
     comp2_q4 = models.StringField(
         choices=[
-            ("true_scenario", "The true active scenario determined by the grid"),
-            ("reported_scenario", "The scenario I reported"),
+            ("5_points", "€5"),
+            ("7_points", "€7"),
+        ],
+        widget=widgets.RadioSelect,
+    )
+    comp2_q5 = models.StringField(
+        choices=[
+            ("charity_payoff_constant", "The charity receives the same amount for a given action, regardless of which scenario is active"),
+            ("charity_payoff_varies", "The charity's earnings for the same action can differ depending on which scenario is active"),
         ],
         widget=widgets.RadioSelect,
     )
@@ -404,16 +490,8 @@ class Player(BasePlayer):
         base_payoff = payoff_info["player"]
         self.charity_payoff = payoff_info["charity"]
 
-        # view-again cost (per request)
-        cost_per_view = get_view_again_cost(self)
-        total_cost = cost_per_view * self.view_again_count
-        self.view_again_cost_applied = total_cost
-        self.net_identification_bonus = (
-            self.identification_bonus_awarded - self.view_again_cost_applied
-        )
-
         # final payoff
-        self.payoff = base_payoff + self.net_identification_bonus
+        self.payoff = base_payoff + self.identification_bonus_awarded
 
 
 class Consent(Page):
@@ -428,6 +506,9 @@ class Consent(Page):
     def before_next_page(player: Player, timeout_happened):
         # Store consent at the participant level so it is available in all rounds
         player.participant.vars["consent"] = player.consent
+        # Start the 10-minute countdown as soon as the participant consents
+        if player.consent == "yes":
+            set_deadline(player)
 
 
 class NoConsent(Page):
@@ -438,6 +519,11 @@ class NoConsent(Page):
             and player.participant.vars.get("consent") == "no"
         )
 
+    @staticmethod
+    def vars_for_template(player: Player):
+        participation_fee = player.session.config.get("participation_fee", 5.00)
+        return dict(participation_fee=f"{float(participation_fee):.2f}")
+
 
 class Introduction(Page):
     @staticmethod
@@ -445,7 +531,16 @@ class Introduction(Page):
         return (
             player.round_number == 1
             and player.participant.vars.get("consent") == "yes"
+            and not player.participant.vars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -453,8 +548,8 @@ class Introduction(Page):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
             num_rounds=Constants.num_rounds,
             grid_size=f"{Constants.grid_rows} × {Constants.grid_cols}",
@@ -462,9 +557,6 @@ class Introduction(Page):
             identification_bonus=Constants.identification_bonus,
             scenario_label_moral=scenario_label(moral_symbol),
             scenario_label_win=scenario_label(win_symbol),
-            view_again_cost=player.participant.vars.get(
-                "view_again_cost", Constants.view_again_cost
-            ),
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
         )
@@ -476,7 +568,16 @@ class MappingInfo(Page):
         return (
             player.round_number == 1
             and player.participant.vars.get("consent") == "yes"
+            and not player.participant.vars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -484,8 +585,8 @@ class MappingInfo(Page):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
             moral_symbol=moral_symbol,
             win_symbol=win_symbol,
@@ -506,12 +607,11 @@ class Stimulus(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        if not consent_ok or comp_failed:
+        timed_out = player.participant.vars.get("timed_out", False)
+        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
             return False
-        # Always allow the 4 practice rounds
         if player.round_number <= 4:
             return True
-        # For main rounds, only proceed if comprehension was passed
         return comp_passed
 
     @staticmethod
@@ -532,7 +632,7 @@ class Stimulus(Page):
 
 class Interpretation(Page):
     form_model = "player"
-    form_fields = ["reported_symbol", "view_again_count", "reported_symbol_rt"]
+    form_fields = ["reported_symbol", "reported_symbol_rt"]
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -540,9 +640,9 @@ class Interpretation(Page):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        # Always show Scenario X left, Scenario O right
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        # Always show Scenario O left, Scenario I right
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
             grid_rows=player.grid_rows(),
             grid_cols=Constants.grid_cols,
@@ -550,14 +650,9 @@ class Interpretation(Page):
             win_symbol=win_symbol,
             scenario_label_moral=scenario_label(moral_symbol),
             scenario_label_win=scenario_label(win_symbol),
-            scenario_label_x=scenario_label("X"),
-            scenario_label_o=scenario_label("O"),
             payoffs=payoffs,
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
-            view_again_cost=player.participant.vars.get(
-                "view_again_cost", Constants.view_again_cost
-            ),
         )
 
     @staticmethod
@@ -570,11 +665,20 @@ class Interpretation(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        if not consent_ok or comp_failed:
+        timed_out = player.participant.vars.get("timed_out", False)
+        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
             return False
         if player.round_number <= 4:
             return True
         return comp_passed
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
 
 
 class AllocationDecision(Page):
@@ -586,11 +690,16 @@ class AllocationDecision(Page):
         consent_ok = player.participant.vars.get("consent") == "yes"
         comp_passed = player.participant.vars.get("comp_passed", False)
         comp_failed = player.participant.vars.get("comp_failed", False)
-        if not consent_ok or comp_failed:
+        timed_out = player.participant.vars.get("timed_out", False)
+        if not consent_ok or comp_failed or beyond_plan(player) or timed_out:
             return False
         if player.round_number <= 4:
             return True
         return comp_passed
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -598,11 +707,11 @@ class AllocationDecision(Page):
         payoffs = Constants.payoffs
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
-        # Always show Scenario X left, Scenario O right
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        # Always show Scenario O left, Scenario I right
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         
-        reported_symbol = player.reported_symbol
+        reported_symbol = player.field_maybe_none("reported_symbol") or win_symbol
         if reported_symbol == moral_symbol:
             chosen_scenario = "moral_conflict"
             chosen_scenario_label = scenario_label(moral_symbol)
@@ -628,12 +737,13 @@ class AllocationDecision(Page):
             chosen_scenario=chosen_scenario,
             chosen_scenario_label=chosen_scenario_label,
             chosen_scenario_symbol=chosen_scenario_symbol,
-            chosen_payoffs=payoffs_x if chosen_scenario_symbol == "X" else payoffs_o,
-            other_payoffs=payoffs_o if chosen_scenario_symbol == "X" else payoffs_x,
+            chosen_payoffs=payoffs_x if chosen_scenario_symbol == "O" else payoffs_o,
+            other_payoffs=payoffs_o if chosen_scenario_symbol == "O" else payoffs_x,
         )
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
         player.set_outcomes()
 
 
@@ -644,15 +754,24 @@ class RoundSummary(Page):
         return (
             player.participant.vars.get("consent") == "yes"
             and player.round_number <= 4
+            and not player.participant.vars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
 
     @staticmethod
     def vars_for_template(player: Player):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         # reported_symbol can be None in edge cases; guard against that
         reported_symbol = player.field_maybe_none("reported_symbol") or ""
         # action_choice can be None in some edge cases (e.g. debugging); guard against that
@@ -661,20 +780,10 @@ class RoundSummary(Page):
             base_payoff = payoffs[player.actual_scenario][action_choice]["player"]
         else:
             base_payoff = cu(0)
-        
-        x_was_chosen = (reported_symbol == "O")
-        o_was_chosen = (reported_symbol == "I")
-        x_was_correct = x_was_chosen and (player.majority_symbol == "O")
-        o_was_correct = o_was_chosen and (player.majority_symbol == "I")
-        
+
         return dict(
             identification_correct=player.identification_correct,
             identification_bonus=player.identification_bonus_awarded,
-            net_identification_bonus=player.net_identification_bonus,
-            view_again_cost=player.view_again_cost_applied,
-            view_again_count=player.view_again_count,
-            view_again_label="view" if player.view_again_count == 1 else "views",
-            view_again_unit_cost=get_view_again_cost(player),
             action_choice=action_choice or "",
             actual_scenario=player.actual_scenario,
             actual_scenario_symbol=scenario_symbol_for(player, player.actual_scenario)
@@ -691,24 +800,35 @@ class RoundSummary(Page):
             base_payoff=base_payoff,
             moral_symbol=moral_symbol,
             win_symbol=win_symbol,
-            scenario_label_x=scenario_label("X"),
-            scenario_label_o=scenario_label("O"),
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
-            x_was_chosen=x_was_chosen,
-            o_was_chosen=o_was_chosen,
-            x_was_correct=x_was_correct,
-            o_was_correct=o_was_correct,
             reported_symbol=reported_symbol,
         )
+
+
+class TimedOut(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return (
+            player.round_number == last_round(player)
+            and player.participant.vars.get("timed_out", False)
+        )
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        participation_fee = player.session.config.get("participation_fee", 5.00)
+        player.participant.payoff = cu(0)
+        return dict(participation_fee=f"{float(participation_fee):.2f}")
 
 
 class FinalPage(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.round_number == Constants.num_rounds and player.participant.vars.get(
-            "consent"
-        ) == "yes"
+        return (
+            player.round_number == last_round(player)
+            and player.participant.vars.get("consent") == "yes"
+            and not player.participant.vars.get("timed_out", False)
+        )
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -717,6 +837,7 @@ class FinalPage(Page):
 
         # If comprehension failed, no main-task earnings; show excluded screen
         if comp_failed:
+            player.participant.payoff = cu(0)
             return dict(
                 excluded=True,
                 payment_round=None,
@@ -726,7 +847,7 @@ class FinalPage(Page):
 
         # Compute accuracy in the non-extreme main rounds (majority_count < 49)
         # and store it for export (on the final-round player and in participant.vars).
-        main_round_players = player.in_rounds(5, Constants.num_rounds)
+        main_round_players = player.in_rounds(5, last_round(player))
         mid_round_players = [
             p for p in main_round_players if p.majority_count < Constants.total_cells
         ]
@@ -747,18 +868,33 @@ class FinalPage(Page):
             # Fallback: derive a deterministic paying round from participant.code
             # (so even if participant.vars is not persisted in this request context,
             # refreshing the page will not change the selected round).
-            main_round_numbers = list(range(5, Constants.num_rounds + 1))
+            main_round_numbers = list(range(5, last_round(player) + 1))
             seeded_rng = random.Random(player.participant.code)
             paying_round_number = seeded_rng.choice(main_round_numbers)
             pvars["paying_round_number"] = paying_round_number
         # Get this player's record in the chosen paying round
         payment_player = player.in_round(paying_round_number)
+        round_payoff = payment_player.payoff
+        belief_bonus = pvars.get("belief_bonus", cu(0))
+
+        # Set participant.payoff to the true payment amount so SessionPayments
+        # shows the correct figure (round earnings + belief bonus only).
+        player.participant.payoff = round_payoff + belief_bonus
+
+        # Store charity payoff for data export
+        pvars["charity_payoff_selected_round"] = float(payment_player.charity_payoff)
+
+        participation_fee = float(player.session.config.get("participation_fee", 5.0))
+        total_euros = float(round_payoff + belief_bonus) + participation_fee
 
         return dict(
             excluded=False,
             payment_round=paying_round_number,
-            payment_player_payoff=payment_player.payoff,
+            payment_player_payoff=round_payoff,
             payment_charity_payoff=payment_player.charity_payoff,
+            belief_bonus=belief_bonus,
+            participation_fee_str=f"{participation_fee:.2f}",
+            total_euros_str=f"{total_euros:.2f}",
         )
 
 
@@ -771,19 +907,27 @@ class BeliefAccuracy(Page):
         pvars = player.participant.vars
         consent_ok = pvars.get("consent") == "yes"
         comp_failed = pvars.get("comp_failed", False)
-        return consent_ok and not comp_failed and player.round_number == Constants.num_rounds
+        timed_out = pvars.get("timed_out", False)
+        return consent_ok and not comp_failed and not timed_out and player.round_number == last_round(player)
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
-        total_main_rounds = Constants.num_rounds - 4  # main rounds (5..num_rounds)
+        total_main_rounds = num_main_rounds(player)
         return dict(
             total_main_rounds=total_main_rounds,
         )
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        # Compute true number of correct identifications in main-task rounds (5..num_rounds)
-        main_round_players = player.in_rounds(5, Constants.num_rounds)
+        handle_timeout(player, timeout_happened)
+        if player.participant.vars.get("timed_out", False):
+            return
+        # Compute true number of correct identifications in main-task rounds
+        main_round_players = player.in_rounds(5, last_round(player))
         correct_count = sum(1 for p in main_round_players if p.identification_correct)
         guess = player.field_maybe_none("belief_identification_correct_count")
         if guess is None:
@@ -815,39 +959,48 @@ class Questionnaire(Page):
 
     @staticmethod
     def is_displayed(player: Player):
-        # Show to all who completed the study (including those who failed comprehension)
+        pvars = player.participant.vars
         return (
-            player.participant.vars.get("consent") == "yes"
-            and player.round_number == Constants.num_rounds
+            pvars.get("consent") == "yes"
+            and player.round_number == last_round(player)
+            and not pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
         )
 
     @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        """
-        Persist any end-of-experiment draws (e.g. payment round) on POST so they
-        do not change if FinalPage is refreshed.
-        """
+        handle_timeout(player, timeout_happened)
         pvars = player.participant.vars
         comp_failed = pvars.get("comp_failed", False)
-        if comp_failed:
+        if comp_failed or pvars.get("timed_out", False):
             return
         if "paying_round_number" not in pvars:
-            main_round_numbers = list(range(5, Constants.num_rounds + 1))
+            main_round_numbers = list(range(5, last_round(player) + 1))
             pvars["paying_round_number"] = random.choice(main_round_numbers)
 
 
 class ComprehensionTest1(Page):
     form_model = "player"
-    form_fields = ["comp1_q1", "comp1_q2", "comp1_q3", "comp1_q4"]
+    form_fields = ["comp1_q1", "comp1_q2", "comp1_q3", "comp1_q4", "comp1_q5"]
 
     @staticmethod
     def is_displayed(player: Player):
+        pvars = player.participant.vars
         return (
-            player.participant.vars.get("consent") == "yes"
+            pvars.get("consent") == "yes"
             and player.round_number == 4
-            and not player.participant.vars.get("comp_passed", False)
-            and not player.participant.vars.get("comp_failed", False)
+            and not pvars.get("comp_passed", False)
+            and not pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -855,8 +1008,8 @@ class ComprehensionTest1(Page):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
@@ -864,18 +1017,23 @@ class ComprehensionTest1(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
+        if player.participant.vars.get("timed_out", False):
+            return
         pvars = player.participant.vars
         correct_answers = {
             "comp1_q1": "true_scenario",
-            "comp1_q2": "scenario_x",
-            "comp1_q3": "scenario_o",
-            "comp1_q4": "true_scenario",
+            "comp1_q2": "scenario_o",
+            "comp1_q3": "scenario_i",
+            "comp1_q4": "action_a_always_better",
+            "comp1_q5": "charity_depends_scenario",
         }
-        all_correct = all(
-            getattr(player, field) == expected
-            for field, expected in correct_answers.items()
-        )
-        if all_correct:
+        wrong_fields = [
+            f for f, expected in correct_answers.items()
+            if getattr(player, f) != expected
+        ]
+        pvars["comp1_wrong_fields"] = wrong_fields
+        if not wrong_fields:
             pvars["comp_passed"] = True
         else:
             pvars["needs_second_test"] = True
@@ -883,7 +1041,7 @@ class ComprehensionTest1(Page):
 
 class ComprehensionTest2(Page):
     form_model = "player"
-    form_fields = ["comp2_q1", "comp2_q2", "comp2_q3", "comp2_q4"]
+    form_fields = ["comp2_q1", "comp2_q2", "comp2_q3", "comp2_q4", "comp2_q5"]
 
     @staticmethod
     def is_displayed(player: Player):
@@ -894,7 +1052,12 @@ class ComprehensionTest2(Page):
             and pvars.get("needs_second_test", False)
             and not pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -902,8 +1065,8 @@ class ComprehensionTest2(Page):
         moral_symbol = player.participant.vars["moral_symbol"]
         win_symbol = player.participant.vars["win_symbol"]
         payoffs = Constants.payoffs
-        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "X" else payoffs["win_win"]
-        payoffs_o = payoffs["win_win"] if moral_symbol == "X" else payoffs["moral_conflict"]
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
@@ -911,12 +1074,16 @@ class ComprehensionTest2(Page):
 
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
+        if player.participant.vars.get("timed_out", False):
+            return
         pvars = player.participant.vars
         correct_answers = {
             "comp2_q1": "true_scenario",
-            "comp2_q2": "scenario_o",
-            "comp2_q3": "scenario_x",
-            "comp2_q4": "true_scenario",
+            "comp2_q2": "scenario_i",
+            "comp2_q3": "scenario_o",
+            "comp2_q4": "5_points",
+            "comp2_q5": "charity_payoff_varies",
         }
         all_correct = all(
             getattr(player, field) == expected
@@ -938,6 +1105,75 @@ class ComprehensionFailNotice(Page):
             and pvars.get("needs_second_test", False)
             and not pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
+        )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        pvars = player.participant.vars
+        wrong_fields = pvars.get("comp1_wrong_fields", [])
+        explanations = {
+            "comp1_q1": dict(
+                number=1,
+                question="If the true active scenario is Scenario O but you mistakenly report Scenario I, which scenario is used to calculate payoffs?",
+                correct="The true active scenario, Scenario O",
+                explanation="Your report does not change which scenario is active. Payoffs are always determined by the TRUE active scenario — the one set by the actual grid majority — regardless of what you report.",
+            ),
+            "comp1_q2": dict(
+                number=2,
+                question="If there are more O symbols on the grid, which scenario is the true active scenario?",
+                correct="Scenario O",
+                explanation="The symbol that appears more often in the grid determines the active scenario. More O symbols → Scenario O is active.",
+            ),
+            "comp1_q3": dict(
+                number=3,
+                question="If there are more I symbols on the grid, which scenario is the true active scenario?",
+                correct="Scenario I",
+                explanation="More I symbols → Scenario I is active.",
+            ),
+            "comp1_q4": dict(
+                number=4,
+                question="Which statement is true about your own payoff across the two scenarios?",
+                correct="Action A always gives me more than Action B, regardless of which scenario is active.",
+                explanation="Your personal payoff depends only on the action you choose, not on which scenario is active. Action A always gives you €7 and Action B always gives you €5 in BOTH scenarios. The scenario only affects what the charity receives.",
+            ),
+            "comp1_q5": dict(
+                number=5,
+                question="Across the two scenarios, which action gives the charity more?",
+                correct="It depends on which scenario is active",
+                explanation="The charity's payoff from each action is not the same across both scenarios. Please review the payoff tables above carefully and compare what the charity receives from Action A and Action B in Scenario O versus Scenario I.",
+            ),
+        }
+        wrong_items = [explanations[f] for f in wrong_fields if f in explanations]
+        moral_symbol = pvars.get("moral_symbol", "O")
+        payoffs = Constants.payoffs
+        payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
+        payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
+        return dict(
+            wrong_items=wrong_items,
+            payoffs_x=payoffs_x,
+            payoffs_o=payoffs_o,
+            identification_bonus=Constants.identification_bonus,
+        )
+
+
+class ComprehensionFinalFail(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        pvars = player.participant.vars
+        return (
+            pvars.get("consent") == "yes"
+            and player.round_number == 4
+            and pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
         )
 
 
@@ -950,7 +1186,16 @@ class ComprehensionPassNotice(Page):
             and player.round_number == 4
             and pvars.get("comp_passed", False)
             and not pvars.get("comp_failed", False)
+            and not pvars.get("timed_out", False)
         )
+
+    @staticmethod
+    def get_timeout_seconds(player: Player):
+        return get_remaining_seconds(player)
+
+    @staticmethod
+    def before_next_page(player: Player, timeout_happened):
+        handle_timeout(player, timeout_happened)
 
 
 page_sequence = [
@@ -965,9 +1210,11 @@ page_sequence = [
     ComprehensionTest1,
     ComprehensionFailNotice,
     ComprehensionTest2,
+    ComprehensionFinalFail,
     ComprehensionPassNotice,
     BeliefAccuracy,
     Questionnaire,
+    TimedOut,
     FinalPage,
 ]
 

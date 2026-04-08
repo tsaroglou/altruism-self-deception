@@ -1,25 +1,108 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Comprehension Check{% endblock %}
-
 {% block content %}
 <div class="welcome-container">
-    <h2>Comprehension Check</h2>
+    <h2>Comprehension Check — Some Answers Were Incorrect</h2>
 
+    <div class="instructions-section alert-section">
+        <p>
+            One or more of your answers was not correct. You will have <strong>one more chance</strong> to
+            answer a similar set of questions.
+        </p>
+        <p>
+            If you do not answer all questions correctly on the next check, you will not play the main part
+            of the task and will instead receive the participation payment.
+        </p>
+        <button type="button" class="btn btn-outline-primary mt-2" id="review-instructions-btn">
+            Review the instructions
+        </button>
+    </div>
+
+    {% if wrong_items %}
     <div class="instructions-section">
-        <p>
-            One or more of your answers in the comprehension check was not correct.
-            You will now have one more chance to answer a similar set of questions.
-        </p>
-        <p>
-            Please read the instructions carefully and make sure you understand how the true active scenario is
-            determined and how points for you and the charity are calculated.
-        </p>
-        <p>
-            If you do not answer all questions correctly on the next check, you will not play the main part of
-            the task and will instead receive the participation payment plus 5 euros.
-        </p>
+        <h4>Questions you answered incorrectly</h4>
+        {% for item in wrong_items %}
+        <div class="wrong-item">
+            <div class="wrong-item-question">
+                <strong>Question {{ item.number }}:</strong> {{ item.question }}
+            </div>
+            <div class="wrong-item-correct">
+                <span class="correct-label">Correct answer:</span> {{ item.correct }}
+            </div>
+            <div class="wrong-item-explanation">
+                <span class="explanation-label">Explanation:</span> {{ item.explanation }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Instructions modal -->
+<div id="instructions-modal" class="instr-modal" hidden>
+    <div class="instr-modal-content">
+        <button type="button" class="instr-close" id="instructions-close">&times;</button>
+        <h4>Instructions — Summary</h4>
+
+        <p><strong>Structure:</strong> You will complete 28 main rounds of a task (after practice). In each round you will choose between Action A and Action B.</p>
+
+        <p><strong>The two scenarios and payoffs:</strong> Each round takes place in either Scenario O or Scenario I. The tables below show the payoffs for each action in each scenario.</p>
+
+        <div class="scenario-mapping">
+            <div class="scenario-card">
+                <div class="scenario-header"><span class="scenario-header-title">Scenario O</span></div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line"><span class="payoff-label">You:</span><span class="payoff-amount">{{ payoffs_x.A.player }}</span></div>
+                                <div class="payoff-line"><span class="payoff-label">Charity:</span><span class="payoff-amount">{{ payoffs_x.A.charity }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line"><span class="payoff-label">You:</span><span class="payoff-amount">{{ payoffs_x.B.player }}</span></div>
+                                <div class="payoff-line"><span class="payoff-label">Charity:</span><span class="payoff-amount">{{ payoffs_x.B.charity }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-header"><span class="scenario-header-title">Scenario I</span></div>
+                <div class="scenario-actions">
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action A</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line"><span class="payoff-label">You:</span><span class="payoff-amount">{{ payoffs_o.A.player }}</span></div>
+                                <div class="payoff-line"><span class="payoff-label">Charity:</span><span class="payoff-amount">{{ payoffs_o.A.charity }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scenario-option">
+                        <div class="scenario-option-content">
+                            <span class="action-name">Action B</span>
+                            <div class="payoff-info">
+                                <div class="payoff-line"><span class="payoff-label">You:</span><span class="payoff-amount">{{ payoffs_o.B.player }}</span></div>
+                                <div class="payoff-line"><span class="payoff-label">Charity:</span><span class="payoff-amount">{{ payoffs_o.B.charity }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p><strong>How the scenario is determined:</strong> Before each decision, you briefly see a grid of O and I symbols. The symbol that appears <em>more often</em> in the grid sets the active scenario for that round. If more O symbols → Scenario O is active. If more I symbols → Scenario I is active.</p>
+
+        <p><strong>Your identification:</strong> After viewing the grid you report which symbol you think appeared more often. If you are correct you earn an identification bonus of <strong>{{ identification_bonus }}</strong>.</p>
+
+        <p class="instr-key-rule"><strong>Key rule:</strong> Even if you report the wrong symbol, the <strong>true active scenario</strong> — determined by the actual grid majority — is always used to calculate your payoff and the charity's payoff. Your report does not change this.</p>
     </div>
 </div>
 
@@ -31,10 +114,16 @@
 }
 
 .welcome-container h2 {
-    color: #2c3e50;
+    color: #c0392b;
     margin-bottom: 2rem;
     font-weight: 600;
     text-align: center;
+}
+
+.welcome-container h4 {
+    color: #34495e;
+    margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 .instructions-section {
@@ -45,13 +134,195 @@
     border-radius: 6px;
 }
 
+.alert-section {
+    border-left-color: #e67e22;
+    background-color: #fef9f0;
+}
+
 .instructions-section p {
     color: #555;
     line-height: 1.7;
     margin-bottom: 0.75rem;
 }
+
+.wrong-item {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.wrong-item-question {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 0.97rem;
+}
+
+.wrong-item-correct {
+    color: #155724;
+    margin-bottom: 0.4rem;
+    font-size: 0.93rem;
+}
+
+.correct-label, .explanation-label {
+    font-weight: 600;
+}
+
+.wrong-item-explanation {
+    color: #555;
+    font-size: 0.91rem;
+    background: #f0f8f0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    border-left: 3px solid #28a745;
+}
+
+/* Modal */
+.instr-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.instr-modal-content {
+    background: #fff;
+    max-width: 680px;
+    width: 95%;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.instr-modal-content h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.instr-modal-content p {
+    color: #444;
+    line-height: 1.7;
+    margin-bottom: 0.85rem;
+    font-size: 0.95rem;
+}
+
+.instr-key-rule {
+    background: #e7f3ff;
+    border-left: 4px solid #3498db;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+}
+
+.instr-close {
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    line-height: 1;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.scenario-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.scenario-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.scenario-header {
+    text-align: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.scenario-header-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.scenario-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.scenario-option {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+.scenario-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.action-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.payoff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.payoff-line {
+    display: flex;
+    justify-content: space-between;
+}
+
+.payoff-label {
+    color: #6c757d;
+    font-size: 0.88rem;
+}
+
+.payoff-amount {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.88rem;
+}
+
+@media (max-width: 600px) {
+    .scenario-mapping { grid-template-columns: 1fr; }
+}
 </style>
+
+<script>
+(function () {
+    const modal = document.getElementById('instructions-modal');
+    const openBtn = document.getElementById('review-instructions-btn');
+    const closeBtn = document.getElementById('instructions-close');
+
+    openBtn.addEventListener('click', function () { modal.hidden = false; });
+    closeBtn.addEventListener('click', function () { modal.hidden = true; });
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.hidden = true;
+    });
+})();
+</script>
 
 {% next_button %}
 {% endblock %}
-

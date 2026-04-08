@@ -1,15 +1,14 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Accuracy Belief{% endblock %}
 
 {% block content %}
 <div class="belief-container">
-    <h3>Belief about your performance</h3>
+    <h3>Assess your performance</h3>
 
     <p>
         In the main part of the experiment, you made decisions about which symbol (O or I)
-        appeared more frequently in the grid in <strong>{{ total_main_rounds }}</strong> rounds.
+        appeared more frequently in the grid in <strong>{{ total_main_rounds }}</strong> main rounds.
     </p>
     <p>
         Please estimate how many of these <strong>{{ total_main_rounds }}</strong> symbol
@@ -21,13 +20,10 @@
 
     <div class="form-section">
         <div class="form-group">
-            <label for="id_belief_identification_correct_count">
+            <label>
                 How many out of {{ total_main_rounds }} O/I identifications do you think you answered correctly?
             </label>
-            <input type="number" name="belief_identification_correct_count"
-                   id="id_belief_identification_correct_count"
-                   class="form-control" min="0" max="{{ total_main_rounds }}"
-                   placeholder="Enter a number from 0 to {{ total_main_rounds }}" required>
+            {{ form.belief_identification_correct_count }}
         </div>
     </div>
 </div>

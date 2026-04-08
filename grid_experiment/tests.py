@@ -30,8 +30,7 @@ class PlayerBot(Bot):
             yield Submission(Stimulus, {}, check_html=False)
             # Always choose X and Action A for testing; logic is what we care about here
             yield Interpretation, {
-                "reported_symbol": "X",
-                "view_again_count": 0,
+                "reported_symbol": "O",
                 "reported_symbol_rt": 0,
             }
             yield AllocationDecision, {
@@ -44,9 +43,10 @@ class PlayerBot(Bot):
         if p.round_number == 4:
             yield ComprehensionTest1, {
                 "comp1_q1": "true_scenario",
-                "comp1_q2": "scenario_x",
-                "comp1_q3": "scenario_o",
-                "comp1_q4": "true_scenario",
+                "comp1_q2": "scenario_o",
+                "comp1_q3": "scenario_i",
+                "comp1_q4": "action_a_always_better",
+                "comp1_q5": "charity_depends_scenario",
             }
             # After passing, show the pass-notice screen
             yield ComprehensionPassNotice
@@ -56,7 +56,6 @@ class PlayerBot(Bot):
             yield Submission(Stimulus, {}, check_html=False)
             yield Interpretation, {
                 "reported_symbol": "O",
-                "view_again_count": 0,
                 "reported_symbol_rt": 0,
             }
             yield AllocationDecision, {

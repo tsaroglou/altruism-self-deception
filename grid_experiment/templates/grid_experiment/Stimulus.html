@@ -1,7 +1,6 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Grid Display{% endblock %}
 
 {% block content %}
 <div class="stimulus-container">
@@ -115,8 +114,10 @@
     cursor: default;
 }
 
-/* Hide oTree's yellow countdown box on this page */
-.otree-timer {
+/* Hide oTree's yellow countdown box on this page — including when the global
+   JS adds the .show-timer class for the last-30-seconds warning */
+.otree-timer,
+.otree-timer.show-timer {
     display: none !important;
 }
 

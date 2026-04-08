@@ -1,0 +1,53 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+
+{% block content %}
+<div class="timedout-container">
+    <h2>Time Limit Reached</h2>
+
+    <p class="timedout-message">
+        You have reached the 10-minute time limit for this experiment.
+    </p>
+
+    <p class="timedout-text">
+        Because the time limit was exceeded, you will receive only the participation fee of
+        <strong>€{{ participation_fee }}</strong>.
+    </p>
+
+    <p class="timedout-text">
+        The experiment is now over for you. Thank you for your time.
+    </p>
+</div>
+
+<style>
+.timedout-container {
+    max-width: 620px;
+    margin: 4rem auto;
+    text-align: center;
+    background-color: #fff8e1;
+    border: 2px solid #f0a500;
+    border-radius: 8px;
+    padding: 2.5rem;
+}
+
+.timedout-container h2 {
+    color: #7a4f00;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.timedout-message {
+    color: #7a4f00;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+}
+
+.timedout-text {
+    color: #555;
+    margin-bottom: 0.75rem;
+}
+</style>
+
+{% endblock %}

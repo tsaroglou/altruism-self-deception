@@ -1,0 +1,64 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block content %}
+<div class="fail-container">
+    <div class="fail-icon">&#10007;</div>
+    <h2>You have been excluded from the experiment</h2>
+
+    <div class="fail-card">
+        <p>
+            Unfortunately, you did not answer all questions correctly on the second comprehension check.
+            As explained in the instructions, this means you will <strong>not participate in the main task</strong>.
+        </p>
+        <p>
+            You will still receive the <strong>participation payment</strong> for your time.
+        </p>
+        <p>
+            Please click the button below to continue to the final page where your payment will be confirmed.
+        </p>
+    </div>
+</div>
+
+<style>
+.fail-container {
+    max-width: 680px;
+    margin: 3rem auto;
+    text-align: center;
+}
+
+.fail-icon {
+    font-size: 3.5rem;
+    color: #c0392b;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.fail-container h2 {
+    color: #c0392b;
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+
+.fail-card {
+    background: #fff8f8;
+    border: 1px solid #f5c6cb;
+    border-left: 4px solid #c0392b;
+    border-radius: 8px;
+    padding: 1.75rem 2rem;
+    text-align: left;
+}
+
+.fail-card p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.fail-card p:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+{% next_button %}
+{% endblock %}

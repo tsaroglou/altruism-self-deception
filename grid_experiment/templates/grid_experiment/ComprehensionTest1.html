@@ -1,7 +1,6 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Comprehension Check{% endblock %}
 
 {% block content %}
 <div class="welcome-container">
@@ -101,31 +100,37 @@
         <div class="form-group">
             <label>
                 1. If the true active scenario is Scenario O but you mistakenly report that you saw more I symbols
-                in the grid, which scenario is used to calculate your and the charity's points?
+                in the grid, which scenario is used to calculate your and the charity's earnings?
             </label>
             {{ form.comp1_q1 }}
         </div>
 
         <div class="form-group">
             <label>
-                2. If there are more O symbols on the grid preceding your decision, which scenario is the true active scenario?
+                2. If there are more O symbols on the grid, which scenario is the true active scenario?
             </label>
             {{ form.comp1_q2 }}
         </div>
 
         <div class="form-group">
             <label>
-                3. If there are more I symbols on the grid preceding your decision, which scenario is the true active scenario?
+                3. If there are more I symbols on the grid, which scenario is the true active scenario?
             </label>
             {{ form.comp1_q3 }}
         </div>
 
         <div class="form-group">
             <label>
-                4. Suppose there are more O symbols on the grid, but you mistakenly report that you saw more I symbols.
-                Which scenario is still used to calculate your and the charity's points?
+                4. Which of the following statements is true about <strong>your own</strong> payoff?
             </label>
             {{ form.comp1_q4 }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                5. Across the two scenarios, which action gives the charity more?
+            </label>
+            {{ form.comp1_q5 }}
         </div>
     </div>
 </div>
@@ -246,6 +251,35 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.form-group').forEach(function (group) {
+        var radios = Array.from(group.querySelectorAll('input[type="radio"]'));
+        if (radios.length < 2) return;
+        var n = radios.length;
+
+        // Walk up from each radio to find its direct child of the options container
+        var optionEls = radios.map(function (radio) {
+            var el = radio;
+            while (el.parentElement && el.parentElement.querySelectorAll('input[type="radio"]').length < n) {
+                el = el.parentElement;
+            }
+            return el;
+        });
+
+        var container = optionEls[0].parentElement;
+        if (!container) return;
+
+        // Fisher-Yates shuffle then re-append in new order
+        for (var i = optionEls.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = optionEls[i]; optionEls[i] = optionEls[j]; optionEls[j] = tmp;
+        }
+        optionEls.forEach(function (el) { container.appendChild(el); });
+    });
+});
+</script>
 
 {% next_button %}
 {% endblock %}

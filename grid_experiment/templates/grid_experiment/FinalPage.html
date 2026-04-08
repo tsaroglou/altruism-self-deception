@@ -1,75 +1,91 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Thank You{% endblock %}
 
 {% block content %}
 <div class="final-container">
     {% if excluded %}
         <h2>Thank you for participating!</h2>
         <p class="final-text">
-            You have now completed the study. Based on your answers in the comprehension checks,
-            you will not play the main part of the task. You will receive the participation payment
-            plus 5 euros, as explained in the instructions.
+            You have now completed the study. Because you did not pass the comprehension checks,
+            you will not play the main task. You will receive the participation payment,
+            as explained at the start.
         </p>
         <p class="final-text">
             Please raise your hand so that an experimenter can come to your station and complete
             the payment procedure.
         </p>
-        <p class="final-text">
-            If you have any questions about this study, please feel free to contact us at
-            <a href="mailto:socialdynamics@it-u.at">socialdynamics@it-u.at</a>.
-        </p>
     {% else %}
         <h2>Thank you for participating!</h2>
 
         <p class="final-text">
-            You have now completed the study. Your decisions in this task will be used for
-            research on how people make decisions and how these decisions affect both
-            themselves and a charity.
+         
         </p>
 
         <div class="payment-summary">
-            <h3>Payment Round</h3>
+            <h3>Your payment</h3>
+
             <p class="final-text">
-                One of the main-task rounds was randomly selected for payment:
-                <strong>Round {{ payment_round }}</strong>.
+                One main-task round was randomly selected for payment: <strong>Round {{ payment_round }}</strong>.
             </p>
-            <p class="final-text">
-                In that round, your payoff was: <strong>{{ payment_player_payoff }}</strong>.
-            </p>
-            <p class="final-text">
-                In that same round, the charity's payoff was: <strong>{{ payment_charity_payoff }}</strong>.
+
+            <table class="payment-table">
+                <tr>
+                    <td>Participation fee</td>
+                    <td class="amount">€{{ participation_fee_str }}</td>
+                </tr>
+                <tr>
+                    <td>Round {{ payment_round }} earnings</td>
+                    <td class="amount">{{ payment_player_payoff }}</td>
+                </tr>
+                {% if belief_bonus %}
+                <tr>
+                    <td>Belief accuracy bonus</td>
+                    <td class="amount">{{ belief_bonus }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td><strong>Your total payment</strong></td>
+                    <td class="amount"><strong>€{{ total_euros_str }}</strong></td>
+                </tr>
+            </table>
+
+            <p class="charity-note">
+                In the selected round, the charity (GiveDirectly) receives:
+                <strong>{{ payment_charity_payoff }}</strong>
             </p>
         </div>
 
         <p class="final-text">
-            Your points from the experiment will be converted into payment according to the
-            rules announced in the invitation.
-        </p>
-
-        <p class="final-text">
-            If you have any questions about this study, please feel free to contact us at
-            <a href="mailto:socialdynamics@it-u.at">socialdynamics@it-u.at</a>.
+            Please raise your hand so that an experimenter can come to your station and complete
+            the payment procedure.
         </p>
     {% endif %}
 </div>
 
 <style>
 .final-container {
-    max-width: 800px;
+    max-width: 680px;
     margin: 3rem auto;
-    padding: 2rem;
+    padding: 2.5rem;
     background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .final-container h2 {
     color: #2c3e50;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     font-weight: 600;
     text-align: center;
+}
+
+.final-container h3 {
+    color: #34495e;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
 }
 
 .final-text {
@@ -78,18 +94,48 @@
     margin-bottom: 0.75rem;
 }
 
-.final-text:last-child {
-    margin-bottom: 0;
+.payment-summary {
+    margin: 1.75rem 0;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
 }
 
-.payment-summary {
-    margin: 1.5rem 0;
-    padding: 1.25rem 1.5rem;
-    background-color: #ffffff;
-    border-radius: 6px;
-    border: 2px solid #dee2e6;
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.payment-table td {
+    padding: 0.55rem 0.25rem;
+    color: #444;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.97rem;
+}
+
+.payment-table .amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.total-row td {
+    border-top: 2px solid #dee2e6;
+    border-bottom: none !important;
+    padding-top: 0.75rem;
+    font-size: 1.05rem;
+    color: #2c3e50;
+}
+
+.charity-note {
+    font-size: 0.9rem;
+    color: #666;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
 }
 </style>
 
 {% endblock %}
-

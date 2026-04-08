@@ -4,18 +4,18 @@
 
 {% block content %}
 <div class="noconsent-container">
-    <h2>No Consent</h2>
+    <h2>Thank You</h2>
 
     <p class="noconsent-message">
         You have chosen not to participate in this study.
     </p>
 
     <p class="noconsent-text">
-        Thank you for your time.
+        You will receive the participation fee of <strong>€{{ participation_fee }}</strong>.
     </p>
 
     <p class="noconsent-text">
-        You may now close this window.
+        The experiment is now over for you.
     </p>
 </div>
 
@@ -33,7 +33,7 @@
 }
 
 .noconsent-message {
-    color: #dc3545;
+    color: #555;
     font-weight: 600;
     margin-bottom: 1rem;
 }
@@ -45,4 +45,3 @@
 </style>
 
 {% endblock %}
-

@@ -1,7 +1,6 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Identify the Scenario{% endblock %}
 
 {% block content %}
 <div class="interpretation-container">
@@ -92,32 +91,7 @@
             </div>
         </label>
 
-    <div class="view-again-hidden" style="display:none;">
-        <div class="view-controls">
-            <button id="view-again-btn" type="button" class="btn btn-outline-primary">
-                View Grid Again
-            </button>
-            {% if view_again_cost > 0 %}
-                <span class="cost-badge">
-                    Cost: {{ view_again_cost }} per viewing
-                </span>
-            {% endif %}
-            <span id="view-count-note" class="count-note"></span>
-        </div>
-        <div id="grid-overlay" class="grid-overlay" hidden>
-            <div class="overlay-header">Grid Preview (2 seconds)</div>
-            <div class="symbol-grid" data-grid-cols="{{ grid_cols }}">
-                {% for row in grid_rows %}
-                    {% for cell in row %}
-                        <div class="cell">{{ cell }}</div>
-                    {% endfor %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
     <div style="display:none;">
-        {{ formfield 'view_again_count' }}
         {{ formfield 'reported_symbol_rt' }}
     </div>
 </div>
@@ -229,71 +203,6 @@
     color: #2c3e50;
 }
 
-.view-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
-
-.view-controls .btn {
-    font-weight: 500;
-    padding: 0.5rem 1.25rem;
-    border-radius: 6px;
-}
-
-.cost-badge {
-    background-color: #fff3cd;
-    color: #856404;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: 1px solid #ffc107;
-}
-
-.count-note {
-    color: #6c757d;
-    font-style: italic;
-    font-size: 0.95rem;
-}
-
-.grid-overlay {
-    background-color: #f8f9fa;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.overlay-header {
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-}
-
-.symbol-grid {
-    display: inline-grid;
-    gap: 0.25rem;
-    font-size: 1.6rem;
-    font-weight: 700;
-    justify-content: center;
-}
-
-.symbol-grid .cell {
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1.5px solid #bdc3c7;
-    background-color: #ffffff;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
 
 .form-section {
     background-color: #f8f9fa;
@@ -350,30 +259,17 @@
 
 <script>
     (function() {
-        const viewButton = document.getElementById('view-again-btn');
-        const overlay = document.getElementById('grid-overlay');
-        const symbolGrid = document.querySelector('.symbol-grid');
-        const viewCountInput =
-            document.getElementById('id_view_again_count') ||
-            document.getElementById('id_player-view_again_count') ||
-            document.querySelector('[name="view_again_count"]');
         const reactionInput =
             document.getElementById('id_reported_symbol_rt') ||
             document.getElementById('id_player-reported_symbol_rt') ||
             document.querySelector('[name="reported_symbol_rt"]');
-        const viewCountNote = document.getElementById('view-count-note');
-        const revealMillis = 2000;
-        let viewCount = 0;
-        let revealTimeout = null;
         const startTime = Date.now();
 
-        const form = document.querySelector('form');
-        if (viewCountInput && !viewCountInput.value) {
-            viewCountInput.value = 0;
-        }
         if (reactionInput && !reactionInput.value) {
             reactionInput.value = 0;
         }
+
+        const form = document.querySelector('form');
         if (form) {
             form.addEventListener('submit', function() {
                 if (reactionInput && (!reactionInput.value || reactionInput.value === '0')) {
@@ -381,50 +277,6 @@
                 }
             });
         }
-
-        function hideGrid() {
-            overlay.hidden = true;
-            overlay.classList.remove('visible');
-            if (viewButton) {
-                viewButton.disabled = false;
-            }
-        }
-
-        function showGrid() {
-            overlay.hidden = false;
-            overlay.classList.add('visible');
-            if (viewButton) {
-                viewButton.disabled = true;
-            }
-            if (revealTimeout) {
-                clearTimeout(revealTimeout);
-            }
-            revealTimeout = setTimeout(hideGrid, revealMillis);
-        }
-
-        if (symbolGrid && symbolGrid.dataset.gridCols) {
-            const cols = parseInt(symbolGrid.dataset.gridCols, 10);
-            if (!Number.isNaN(cols)) {
-                symbolGrid.style.gridTemplateColumns = `repeat(${cols}, 2.5rem)`;
-            }
-        }
-
-        if (viewButton) {
-            viewButton.addEventListener('click', function(ev) {
-                ev.preventDefault();
-                viewCount += 1;
-                if (viewCountInput) {
-                    viewCountInput.value = viewCount;
-                }
-                if (viewCountNote) {
-                    viewCountNote.textContent = `(Viewed ${viewCount} time${viewCount === 1 ? '' : 's'})`;
-                }
-                showGrid();
-            });
-        }
-
-        // ensure grid is hidden at start
-        hideGrid();
     })();
 </script>
 {% next_button %}

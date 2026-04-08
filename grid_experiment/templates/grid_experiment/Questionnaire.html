@@ -1,144 +1,261 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Final Questions{% endblock %}
 
 {% block content %}
-<div class="questionnaire-container">
-    <h3>Final questions</h3>
+<div class="q-container">
+    <h3>Final Questions</h3>
+    <p class="q-intro">Please answer the following questions about yourself and your experience in this experiment.</p>
 
-    <p>
-        Please answer the following questions about yourself and your experience in this experiment.
-    </p>
-
-    <div class="form-section">
-        <div class="form-row">
-            <div class="form-group col-md-4">
-                <label for="id_age">Age</label>
+    <!-- Demographics -->
+    <div class="q-card">
+        <div class="q-row">
+            <div class="q-field q-field-narrow">
+                <label for="id_age" class="q-label">Age</label>
                 {{ form.age }}
             </div>
-            <div class="form-group col-md-8">
-                <label>Gender / sex</label>
+            <div class="q-field q-field-wide">
+                <label class="q-label">Gender</label>
                 {{ form.gender_sex }}
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Highest completed education</label>
+        <div class="q-field">
+            <label class="q-label">Highest completed education</label>
             {{ form.education_level }}
         </div>
 
-        <div class="form-group">
-            <label>Employment / student status</label>
+        <div class="q-field">
+            <label class="q-label">Employment / student status</label>
             {{ form.employment_status }}
         </div>
 
-        <div class="form-group">
-            <label>If you are currently a student: which education level?</label>
+        <div class="q-field">
+            <label class="q-label">If currently a student: which education level?</label>
             {{ form.student_level }}
         </div>
 
-        <div class="form-group">
-            <label>Field of study (please write, or N/A)</label>
+        <div class="q-field">
+            <label class="q-label">Field of study</label>
             {{ form.field_of_study }}
         </div>
+    </div>
 
-        <hr>
-
-        <div class="form-group">
-            <label>{{ form.self_altruism.label }}</label>
-            <p class="scale-caption">(1 = not at all altruistic, 6 = very altruistic)</p>
-            <div class="likert-row">{{ form.self_altruism }}</div>
+    <!-- Likert scales -->
+    <div class="q-card">
+        <div class="q-field">
+            <label class="q-label">{{ form.self_altruism.label }}</label>
+            <div class="likert-wrapper">
+                <span class="likert-anchor">Not at all altruistic</span>
+                <div class="likert-options">{{ form.self_altruism }}</div>
+                <span class="likert-anchor">Very altruistic</span>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>{{ form.donate_frequency.label }}</label>
-            <p class="scale-caption">(1 = never, 6 = very often)</p>
-            <div class="likert-row">{{ form.donate_frequency }}</div>
+        <div class="q-field">
+            <label class="q-label">{{ form.donate_frequency.label }}</label>
+            <div class="likert-wrapper">
+                <span class="likert-anchor">Never</span>
+                <div class="likert-options">{{ form.donate_frequency }}</div>
+                <span class="likert-anchor">Very often</span>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>{{ form.task_difficulty.label }}</label>
-            <p class="scale-caption">(1 = very easy, 6 = very difficult)</p>
-            <div class="likert-row">{{ form.task_difficulty }}</div>
+        <div class="q-field">
+            <label class="q-label">{{ form.task_difficulty.label }}</label>
+            <div class="likert-wrapper">
+                <span class="likert-anchor">Very easy</span>
+                <div class="likert-options">{{ form.task_difficulty }}</div>
+                <span class="likert-anchor">Very difficult</span>
+            </div>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label>{{ form.study_purpose.label }}</label>
+    <!-- Open question -->
+    <div class="q-card">
+        <div class="q-field">
+            <label class="q-label">{{ form.study_purpose.label }}</label>
             {{ form.study_purpose }}
+            <div class="q-hint">Maximum 50 words.</div>
         </div>
     </div>
 </div>
 
 <style>
-.questionnaire-container {
-    max-width: 800px;
-    margin: 2.5rem auto;
+.q-container {
+    max-width: 760px;
+    margin: 2rem auto;
 }
 
-.questionnaire-container h3 {
+.q-container h3 {
     color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.q-intro {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.q-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.q-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #3498db;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.6rem;
+}
+
+.q-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.q-field-narrow { flex: 0 0 130px; }
+.q-field-wide   { flex: 1 1 200px; }
+
+.q-field {
     margin-bottom: 1.25rem;
 }
 
-.questionnaire-container p {
-    color: #444;
+.q-field:last-child {
+    margin-bottom: 0;
 }
 
-.form-section {
-    margin-top: 1.5rem;
-    background-color: #f8f9fa;
-    padding: 1.5rem;
+.q-label {
+    display: block;
+    font-weight: 500;
+    color: #34495e;
+    margin-bottom: 0.4rem;
+    font-size: 0.95rem;
+}
+
+.q-hint {
+    font-size: 0.83rem;
+    color: #888;
+    margin-top: 0.25rem;
+}
+
+/* Inputs rendered by oTree */
+.q-container select,
+.q-container input[type="number"],
+.q-container textarea {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    background-color: #fff;
+    border: 1px solid #ced4da;
     border-radius: 6px;
-    border: 1px solid #dee2e6;
+    line-height: 1.5;
+    transition: border-color 0.15s;
 }
 
-.form-group {
-    margin-bottom: 1rem;
+.q-container select:focus,
+.q-container input[type="number"]:focus,
+.q-container textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
 }
 
-.scale-caption {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 0.25rem;
+.q-container input[type="number"] {
+    max-width: 130px;
 }
 
-/* Likert (1-6) horizontal radio styling */
-.likert-row {
+/* Likert rows */
+.likert-wrapper {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.75rem 0.75rem;
-    background: #ffffff;
+    background: #f8f9fa;
     border: 1px solid #dee2e6;
-    border-radius: 6px;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
 }
 
-.likert-row .form-check {
-    margin: 0;
+.likert-anchor {
+    font-size: 0.8rem;
+    color: #888;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.likert-row label {
-    margin: 0;
-    font-weight: 500;
+.likert-options {
+    flex: 1;
+}
+
+/* oTree 5 RadioSelect: renders .form-check divs inside a plain <div> */
+/* Make that wrapper a horizontal flexbox */
+.likert-options > div {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.likert-options .form-check {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.3rem;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.likert-options .form-check-label {
+    font-size: 0.88rem;
+    font-weight: 600;
     color: #2c3e50;
+    margin: 0;
+    cursor: pointer;
 }
 
-.likert-row input[type="radio"] {
-    margin-right: 0.25rem;
+.likert-options input[type="radio"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    accent-color: #3498db;
+    margin: 0 !important;
 }
 
-.likert-ends {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: #666;
-    margin-top: 0.4rem;
-    padding: 0 0.25rem;
+.likert-options .form-check-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    cursor: pointer;
+}
+
+.likert-options input[type="radio"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    accent-color: #3498db;
+    margin: 0;
+}
+
+.q-container textarea {
+    resize: vertical;
+    min-height: 80px;
 }
 </style>
 
 {% next_button %}
 {% endblock %}
-

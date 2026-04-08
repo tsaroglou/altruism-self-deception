@@ -2,7 +2,41 @@
 {% load otree static %}
 
 {% block global_styles  %}
+<link rel="stylesheet" href="{% static 'global/custom.css' %}">
+<style>
+/* Hide oTree's built-in countdown timer initially; show it only in the last 30 seconds */
+.otree-timer {
+    display: none !important;
+}
+.otree-timer.show-timer {
+    display: block !important;
+}
+</style>
 {% endblock %}
 
 {% block global_scripts  %}
+<script>
+(function () {
+    // Poll every 500ms; when the countdown drops to ≤ 30 seconds, make the timer visible.
+    var pollInterval = setInterval(function () {
+        var timerEl = document.querySelector('.otree-timer');
+        if (!timerEl) return;
+        var timeLeftEl = timerEl.querySelector('.otree-timer__time-left');
+        if (!timeLeftEl) return;
+        var text = timeLeftEl.textContent.trim();
+        // oTree formats as "m:ss" or "h:mm:ss"
+        var parts = text.split(':');
+        var totalSeconds = 0;
+        if (parts.length === 2) {
+            totalSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        } else if (parts.length === 3) {
+            totalSeconds = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+        }
+        if (totalSeconds > 0 && totalSeconds <= 30) {
+            timerEl.classList.add('show-timer');
+            clearInterval(pollInterval);
+        }
+    }, 500);
+})();
+</script>
 {% endblock %}

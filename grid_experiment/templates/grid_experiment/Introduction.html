@@ -1,7 +1,6 @@
 {% extends "global/Page.html" %}
 {% load otree static %}
 
-{% block title %}Instructions{% endblock %}
 
 {% block content %}
 <div class="welcome-container">
@@ -26,10 +25,10 @@
         <h4>The two scenarios and your choices</h4>
         <p>
             In the Main Task, each round takes place in one of two scenarios. In every round, you will choose between
-            <strong>Action A</strong> and <strong>Action B</strong>, and these choices determine how many points you and the charity receive.
+            <strong>Action A</strong> and <strong>Action B</strong>, and these choices determine how much you and the charity receive.
         </p>
         <p>
-            The tables below show the points for you and the charity in each scenario:
+            The tables below show the earnings for you and the charity in each scenario:
         </p>
         <div class="scenario-mapping">
             <div class="scenario-card">
@@ -108,15 +107,15 @@
             </div>
         </div>
         <p>
-            For example, in Scenario O, if you choose <strong>Action A</strong>, you and the charity receive the points shown in the first row.
-            If you choose <strong>Action B</strong>, you and the charity receive the points shown in the second row. The same logic applies in Scenario I.
+            For example, in Scenario O, if you choose <strong>Action A</strong>, you and the charity receive the amounts shown in the first row.
+            If you choose <strong>Action B</strong>, you and the charity receive the amounts shown in the second row. The same logic applies in Scenario I.
         </p>
     </div>
 
     <div class="instructions-section">
         <h4>The charity: GiveDirectly</h4>
         <p>
-            In this experiment, the charity that can receive points from your choices is <strong>GiveDirectly</strong>.
+            In this experiment, the charity that can receive money from your choices is <strong>GiveDirectly</strong>.
         </p>
         <button type="button" class="btn btn-outline-primary" id="give-directly-btn">
             Learn more about GiveDirectly
@@ -155,7 +154,7 @@
         </p>
         <div class="comprehension-question">
             <div class="question-text">
-                1. In <strong>Scenario O</strong>, if you choose <strong>Action B</strong>, how many points does the <strong>charity</strong> receive?
+                1. In <strong>Scenario O</strong>, if you choose <strong>Action B</strong>, how much does the <strong>charity</strong> receive?
             </div>
             <div class="question-options">
                 <button type="button" class="comprehension-option" data-correct="true">
@@ -165,13 +164,14 @@
                     {{ payoffs_x.A.charity }}
                 </button>
                 <button type="button" class="comprehension-option" data-correct="false">
-                    {{ payoffs_o.B.charity }}
+                    {{ payoffs_x.A.player }}
                 </button>
             </div>
+            <p class="question-feedback"></p>
         </div>
         <div class="comprehension-question">
             <div class="question-text">
-                2. In <strong>Scenario I</strong>, if you want to give the charity <strong>more</strong> points (compared to the other action),
+                2. In <strong>Scenario I</strong>, if you want to give the charity <strong>more</strong> (compared to the other action),
                 which action should you choose?
             </div>
             <div class="question-options">
@@ -182,10 +182,11 @@
                     Action {% if payoffs_o.B.charity > payoffs_o.A.charity %}A{% else %}B{% endif %}
                 </button>
             </div>
+            <p class="question-feedback"></p>
         </div>
         <div class="comprehension-question">
             <div class="question-text">
-                3. In <strong>Scenario O</strong>, if you want to give <strong>yourself</strong> more points (compared to the other action),
+                3. In <strong>Scenario O</strong>, if you want to give <strong>yourself</strong> more (compared to the other action),
                 which action should you choose?
             </div>
             <div class="question-options">
@@ -196,11 +197,12 @@
                     Action {% if payoffs_x.B.player > payoffs_x.A.player %}A{% else %}B{% endif %}
                 </button>
             </div>
+            <p class="question-feedback"></p>
         </div>
         <div class="comprehension-question">
             <div class="question-text">
-                4. In <strong>Scenario I</strong>, if you choose the action that gives <strong>you</strong> more points, what happens to the
-                points for the <strong>charity</strong> compared to the other action?
+                4. In <strong>Scenario I</strong>, if you choose the action that gives <strong>you</strong> more, what happens to the
+                charity's earnings compared to the other action?
             </div>
             <div class="question-options">
                 <button type="button" class="comprehension-option" data-correct="true">
@@ -208,16 +210,17 @@
                         {% if payoffs_o.B.charity > payoffs_o.A.charity %}more{% elif payoffs_o.B.charity < payoffs_o.A.charity %}fewer{% else %}the same number of{% endif %}
                     {% else %}
                         {% if payoffs_o.A.charity > payoffs_o.B.charity %}more{% elif payoffs_o.A.charity < payoffs_o.B.charity %}fewer{% else %}the same number of{% endif %}
-                    {% endif %} points.
+                    {% endif %}.
                 </button>
                 <button type="button" class="comprehension-option" data-correct="false">
-                    The charity always receives the same number of points, regardless of your action.
+                    The charity always receives the same amount, regardless of your action.
                 </button>
             </div>
+            <p class="question-feedback"></p>
         </div>
         <div class="comprehension-question">
             <div class="question-text">
-                5. In <strong>Scenario O</strong>, which action is <strong>better for the charity</strong> (gives the charity more points)?
+                5. In <strong>Scenario O</strong>, which action is <strong>better for the charity</strong> (gives the charity more)?
             </div>
             <div class="question-options">
                 <button type="button" class="comprehension-option" data-correct="true">
@@ -227,22 +230,8 @@
                     Action {% if payoffs_x.B.charity > payoffs_x.A.charity %}A{% else %}B{% endif %}
                 </button>
             </div>
+            <p class="question-feedback"></p>
         </div>
-        <div class="comprehension-question">
-            <div class="question-text">
-                6. Suppose the <strong>true active scenario</strong> is Scenario O, but you mistakenly report Scenario I.
-                Which scenario is used to calculate your and the charity's points?
-            </div>
-            <div class="question-options">
-                <button type="button" class="comprehension-option" data-correct="true">
-                    The true active scenario (Scenario O).
-                </button>
-                <button type="button" class="comprehension-option" data-correct="false">
-                    The scenario you reported (Scenario O).
-                </button>
-            </div>
-        </div>
-        <p class="comprehension-feedback" id="comprehension-feedback"></p>
     </div>
 
     <div class="instructions-section">
@@ -256,7 +245,7 @@
             an identification bonus of <strong>{{ identification_bonus }}</strong>.
         </p>
         <div class="example-grid">
-            <div class="example-grid-title">Example grid (for illustration only)</div>
+            <div class="example-grid-title">Example grid:</div>
             <div class="symbol-grid example-symbol-grid">
                 <div class="cell">O</div><div class="cell">I</div><div class="cell">O</div><div class="cell">O</div><div class="cell">I</div><div class="cell">O</div><div class="cell">I</div>
                 <div class="cell">I</div><div class="cell">O</div><div class="cell">O</div><div class="cell">I</div><div class="cell">O</div><div class="cell">I</div><div class="cell">O</div>
@@ -269,28 +258,60 @@
         </div>
         <p>
             Even if you report the wrong symbol, the <strong>true active scenario</strong> is still determined by the
-            symbol that actually appeared more often in the grid. Your earnings and the charity’s points are always
+            symbol that actually appeared more often in the grid. Your earnings and the charity’s earnings are always
             calculated using this true active scenario.
         </p>
+
+        <div class="comprehension-question">
+            <div class="question-text">
+                6. Suppose the <strong>true active scenario</strong> is Scenario O, but you mistakenly report Scenario I.
+                Which scenario is used to calculate your and the charity’s earnings?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    The true active scenario (Scenario O).
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    The scenario I reported (Scenario I).
+                </button>
+            </div>
+            <p class="question-feedback"></p>
+        </div>
+        <div class="comprehension-question">
+            <div class="question-text">
+                7. If you correctly identify the majority symbol in a round, what do you earn in addition to
+                your action payoff?
+            </div>
+            <div class="question-options">
+                <button type="button" class="comprehension-option" data-correct="true">
+                    An identification bonus of {{ identification_bonus }}.
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    Nothing extra.
+                </button>
+                <button type="button" class="comprehension-option" data-correct="false">
+                    A deduction from my payoff.
+                </button>
+            </div>
+            <p class="question-feedback"></p>
+        </div>
     </div>
 
 
     <div class="instructions-section">
         <h4>Practice rounds and Main Task</h4>
         <p>
-            First, you will play <strong>5 practice rounds</strong>. These rounds include the feedback screen after each
+            First, you will play <strong>4 practice rounds</strong>. These rounds include the feedback screen after each
             round so that you can become familiar with the task, the scenarios, and the round summary.
         </p>
         <p>
-            After the practice, you will play <strong>48 Main Task rounds</strong> (for payment). In these rounds, you will
-            not see the round summary after every single round, but your points are always calculated in the same
+            After the practice, you will play <strong>28 Main Task rounds</strong> (for payment). In these rounds, you will
+            not see the round summary after every single round, but your earnings are always calculated in the same
             way as described above.
         </p>
     </div>
 
-    <div class="alert alert-primary">
-        <strong>Please work carefully.</strong> Your decisions affect both your own payoff and the amount donated to the charity.
-    </div>
+   
 </div>
 
 <style>
@@ -599,21 +620,28 @@
         });
     }
 
-    const options = document.querySelectorAll('.comprehension-option');
-    const feedbackEl = document.getElementById('comprehension-feedback');
-    options.forEach(function(btn) {
+    // Shuffle answer options within each comprehension question block
+    document.querySelectorAll('.question-options').forEach(function(container) {
+        var buttons = Array.from(container.children);
+        for (var i = buttons.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            container.appendChild(buttons[j]);
+            buttons.splice(j, 1);
+        }
+    });
+
+    document.querySelectorAll('.comprehension-option').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const isCorrect = this.dataset.correct === 'true';
             this.classList.remove('correct', 'incorrect');
             this.classList.add(isCorrect ? 'correct' : 'incorrect');
-            if (feedbackEl) {
-                if (isCorrect) {
-                    feedbackEl.textContent = 'Correct! This matches the payoff table above.';
-                    feedbackEl.style.color = '#155724';
-                } else {
-                    feedbackEl.textContent = 'That is not correct. Please check the payoff table above and try again.';
-                    feedbackEl.style.color = '#721c24';
-                }
+            const block = this.closest('.comprehension-question');
+            const feedback = block ? block.querySelector('.question-feedback') : null;
+            if (feedback) {
+                feedback.textContent = isCorrect
+                    ? 'Correct!'
+                    : 'Not correct — please check the payoff tables above and try again.';
+                feedback.style.color = isCorrect ? '#155724' : '#721c24';
             }
         });
     });
