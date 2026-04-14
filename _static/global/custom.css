@@ -42,7 +42,6 @@ button[type="submit"].btn-primary:hover {
 
 /* Hide "Powered by oTree" footer */
 footer,
-.otree-footer,
-.powered-by-otree {
+.otree-footer {
     display: none !important;
 }
