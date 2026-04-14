@@ -24,6 +24,9 @@
     <div class="instructions-section">
         <h4>The two scenarios and your choices</h4>
         <p>
+            In this experiment, you will make decisions that affect the payments of yourself and a charity.
+        </p>
+        <p>
             In the Main Task, each round takes place in one of two scenarios. In every round, you will choose between
             <strong>Action A</strong> and <strong>Action B</strong>, and these choices determine how much you and the charity receive.
         </p>
@@ -207,9 +210,9 @@
             <div class="question-options">
                 <button type="button" class="comprehension-option" data-correct="true">
                     The charity receives {% if payoffs_o.B.player > payoffs_o.A.player %}
-                        {% if payoffs_o.B.charity > payoffs_o.A.charity %}more{% elif payoffs_o.B.charity < payoffs_o.A.charity %}fewer{% else %}the same number of{% endif %}
+                        {% if payoffs_o.B.charity > payoffs_o.A.charity %}more{% elif payoffs_o.B.charity < payoffs_o.A.charity %}less{% else %}the same number of{% endif %}
                     {% else %}
-                        {% if payoffs_o.A.charity > payoffs_o.B.charity %}more{% elif payoffs_o.A.charity < payoffs_o.B.charity %}fewer{% else %}the same number of{% endif %}
+                        {% if payoffs_o.A.charity > payoffs_o.B.charity %}more{% elif payoffs_o.A.charity < payoffs_o.B.charity %}less{% else %}the same number of{% endif %}
                     {% endif %}.
                 </button>
                 <button type="button" class="comprehension-option" data-correct="false">
@@ -237,7 +240,8 @@
     <div class="instructions-section">
         <h4>Identifying which scenario is active</h4>
         <p>
-            Before you choose between Actions A and B, you will briefly see a grid filled with O and I symbols.
+            Before you choose between Actions A and B, you will see a grid filled with O and I symbols for
+            <strong>2 seconds</strong>.
             The symbol that appears more often in the grid determines which scenario (O or I) is active in that round.
         </p>
         <p>
@@ -597,7 +601,7 @@
 </style>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('give-directly-modal');
     const openBtn = document.getElementById('give-directly-btn');
     const closeBtn = document.getElementById('give-directly-close');
@@ -630,22 +634,55 @@
         }
     });
 
-    document.querySelectorAll('.comprehension-option').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const isCorrect = this.dataset.correct === 'true';
-            this.classList.remove('correct', 'incorrect');
-            this.classList.add(isCorrect ? 'correct' : 'incorrect');
-            const block = this.closest('.comprehension-question');
-            const feedback = block ? block.querySelector('.question-feedback') : null;
-            if (feedback) {
-                feedback.textContent = isCorrect
-                    ? 'Correct!'
-                    : 'Not correct — please check the payoff tables above and try again.';
-                feedback.style.color = isCorrect ? '#155724' : '#721c24';
-            }
+    // Track which questions have been answered correctly
+    var questions = Array.from(document.querySelectorAll('.comprehension-question'));
+    var correctlyAnswered = new Set();
+
+    // Disable Next button until all questions are answered correctly
+    var nextBtn = document.querySelector('.otree-btn-next');
+    if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.title = 'Please answer all questions above correctly before continuing.';
+    }
+
+    function updateNextButton() {
+        if (!nextBtn) return;
+        if (correctlyAnswered.size >= questions.length) {
+            nextBtn.disabled = false;
+            nextBtn.title = '';
+        }
+    }
+
+    questions.forEach(function(block, index) {
+        var options = block.querySelectorAll('.comprehension-option');
+        options.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var isCorrect = this.dataset.correct === 'true';
+                // Clear all option styles in this question first
+                options.forEach(function(b) {
+                    b.classList.remove('correct', 'incorrect');
+                });
+                // Apply result to clicked button only
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+                // Update feedback text
+                var feedback = block.querySelector('.question-feedback');
+                if (feedback) {
+                    feedback.textContent = isCorrect
+                        ? 'Correct!'
+                        : 'Not correct — please check the payoff tables above and try again.';
+                    feedback.style.color = isCorrect ? '#155724' : '#721c24';
+                }
+                // Track correctness
+                if (isCorrect) {
+                    correctlyAnswered.add(index);
+                } else {
+                    correctlyAnswered.delete(index);
+                }
+                updateNextButton();
+            });
         });
     });
-})();
+});
 </script>
 
 {% next_button %}

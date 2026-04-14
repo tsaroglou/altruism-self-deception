@@ -19,24 +19,32 @@
         </button>
     </div>
 
-    {% if wrong_items %}
     <div class="instructions-section">
-        <h4>Questions you answered incorrectly</h4>
-        {% for item in wrong_items %}
-        <div class="wrong-item">
-            <div class="wrong-item-question">
+        <h4>Review of all questions</h4>
+        {% for item in all_items %}
+        <div class="review-item {% if item.is_correct %}review-item-correct{% else %}review-item-wrong{% endif %}">
+            <div class="review-item-question">
                 <strong>Question {{ item.number }}:</strong> {{ item.question }}
             </div>
-            <div class="wrong-item-correct">
+            <div class="review-item-your-answer">
+                <span class="your-answer-label">Your answer:</span> {{ item.participant_answer }}
+                {% if item.is_correct %}
+                    <span class="correct-badge">✓ Correct</span>
+                {% else %}
+                    <span class="wrong-badge">✗ Incorrect</span>
+                {% endif %}
+            </div>
+            {% if not item.is_correct %}
+            <div class="review-item-correct-answer">
                 <span class="correct-label">Correct answer:</span> {{ item.correct }}
             </div>
             <div class="wrong-item-explanation">
                 <span class="explanation-label">Explanation:</span> {{ item.explanation }}
             </div>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
-    {% endif %}
 </div>
 
 <!-- Instructions modal -->
@@ -145,27 +153,58 @@
     margin-bottom: 0.75rem;
 }
 
-.wrong-item {
+.review-item {
     background: #fff;
-    border: 1px solid #dee2e6;
     border-radius: 6px;
     padding: 1rem;
     margin-bottom: 1rem;
 }
 
-.wrong-item-question {
+.review-item-correct {
+    border: 1px solid #c3e6cb;
+    background: #f4fff6;
+}
+
+.review-item-wrong {
+    border: 1px solid #f5c6cb;
+    background: #fff8f8;
+}
+
+.review-item-question {
     color: #2c3e50;
     margin-bottom: 0.5rem;
     font-size: 0.97rem;
 }
 
-.wrong-item-correct {
+.review-item-your-answer {
+    color: #444;
+    margin-bottom: 0.4rem;
+    font-size: 0.93rem;
+}
+
+.review-item-correct-answer {
     color: #155724;
     margin-bottom: 0.4rem;
     font-size: 0.93rem;
 }
 
-.correct-label, .explanation-label {
+.correct-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #155724;
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.wrong-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #721c24;
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.your-answer-label, .correct-label, .explanation-label {
     font-weight: 600;
 }
 
@@ -176,6 +215,7 @@
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     border-left: 3px solid #28a745;
+    margin-top: 0.4rem;
 }
 
 /* Modal */

@@ -11,7 +11,7 @@
             Please answer the questions below about the rules of the experiment. You must answer all questions
             correctly to proceed to the main part of the study. If you make a mistake, you will get a second,
             similar comprehension check. If you also fail the second check, you will not play the main task and
-            will instead receive the participation payment plus 5 euros.
+            will instead receive the participation payment of 5 euros.
         </p>
     </div>
 
@@ -96,40 +96,30 @@
         </div>
     </div>
 
-    <div class="instructions-section">
-        <div class="form-group">
-            <label>
-                1. If the true active scenario is Scenario O but you mistakenly report that you saw more I symbols
-                in the grid, which scenario is used to calculate your and the charity's earnings?
-            </label>
+    <div class="questions-section">
+        <div class="q-card">
+            <div class="q-label"><span class="q-num">1</span>If the true active scenario is Scenario O but you mistakenly report that you saw more I symbols
+                in the grid, which scenario is used to calculate your and the charity's earnings?</div>
             {{ form.comp1_q1 }}
         </div>
 
-        <div class="form-group">
-            <label>
-                2. If there are more O symbols on the grid, which scenario is the true active scenario?
-            </label>
+        <div class="q-card">
+            <div class="q-label"><span class="q-num">2</span>If there are more O symbols on the grid, which scenario is the true active scenario?</div>
             {{ form.comp1_q2 }}
         </div>
 
-        <div class="form-group">
-            <label>
-                3. If there are more I symbols on the grid, which scenario is the true active scenario?
-            </label>
+        <div class="q-card">
+            <div class="q-label"><span class="q-num">3</span>If there are more I symbols on the grid, which scenario is the true active scenario?</div>
             {{ form.comp1_q3 }}
         </div>
 
-        <div class="form-group">
-            <label>
-                4. Which of the following statements is true about <strong>your own</strong> payoff?
-            </label>
+        <div class="q-card">
+            <div class="q-label"><span class="q-num">4</span>Which of the following statements is true about <strong>your own</strong> payoff?</div>
             {{ form.comp1_q4 }}
         </div>
 
-        <div class="form-group">
-            <label>
-                5. Across the two scenarios, which action gives the charity more?
-            </label>
+        <div class="q-card">
+            <div class="q-label"><span class="q-num">5</span>Across the two scenarios, which action gives the charity more?</div>
             {{ form.comp1_q5 }}
         </div>
     </div>
@@ -250,16 +240,109 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Question cards ── */
+.questions-section {
+    margin-bottom: 1.5rem;
+}
+
+.q-card {
+    background: #fff;
+    border: 1.5px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.q-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin-bottom: 0.85rem;
+}
+
+.q-num {
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    background: #3498db;
+    color: #fff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-top: 0.05rem;
+}
+
+/* ── Radio option rows ── */
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.85rem;
+    margin: 0.3rem 0;
+    border: 1.5px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #f8f9fa;
+    transition: border-color 0.13s, background-color 0.13s;
+    list-style: none;
+}
+
+.radio-option:hover {
+    border-color: #3498db;
+    background: #e7f3ff;
+}
+
+.radio-option.radio-selected {
+    border-color: #3498db;
+    background: #d6eaf8;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.radio-option label,
+.radio-option .form-check-label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 400;
+    color: #34495e;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.radio-option.radio-selected label,
+.radio-option.radio-selected .form-check-label {
+    color: #1a5276;
+    font-weight: 500;
+}
+
+/* Strip Bootstrap form-check default padding that oTree adds */
+.q-card .form-check {
+    padding-left: 0;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.form-group').forEach(function (group) {
-        var radios = Array.from(group.querySelectorAll('input[type="radio"]'));
+    document.querySelectorAll('.q-card').forEach(function (card) {
+        var radios = Array.from(card.querySelectorAll('input[type="radio"]'));
         if (radios.length < 2) return;
         var n = radios.length;
 
-        // Walk up from each radio to find its direct child of the options container
+        // Walk up from each radio to find its wrapper element inside the options container
         var optionEls = radios.map(function (radio) {
             var el = radio;
             while (el.parentElement && el.parentElement.querySelectorAll('input[type="radio"]').length < n) {
@@ -270,6 +353,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var container = optionEls[0].parentElement;
         if (!container) return;
+
+        // Style each option as a clickable row
+        optionEls.forEach(function (el) {
+            el.classList.add('radio-option');
+            el.addEventListener('click', function () {
+                optionEls.forEach(function (o) { o.classList.remove('radio-selected'); });
+                el.classList.add('radio-selected');
+                var radio = el.querySelector('input[type="radio"]');
+                if (radio) { radio.checked = true; }
+            });
+        });
+
+        // Reflect already-checked state (e.g. browser back)
+        radios.forEach(function (radio) {
+            if (radio.checked) {
+                var el = radio;
+                while (el.parentElement && !el.classList.contains('radio-option')) {
+                    el = el.parentElement;
+                }
+                el.classList.add('radio-selected');
+            }
+        });
 
         // Fisher-Yates shuffle then re-append in new order
         for (var i = optionEls.length - 1; i > 0; i--) {

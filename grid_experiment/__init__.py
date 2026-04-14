@@ -255,14 +255,13 @@ class Player(BasePlayer):
     mid_main_accuracy = models.FloatField()
 
     # Belief about main-task identification accuracy (number of correct identifications out of 24)
-    belief_identification_correct_count = models.IntegerField(min=0)
+    belief_identification_correct_count = models.IntegerField(min=0, max=28)
     # Bonus for a correct belief about identification accuracy (paid regardless of which round is selected)
     belief_bonus = models.CurrencyField(initial=cu(0))
 
     # Demographics & questionnaire (asked at the end of the experiment)
-    age = models.IntegerField(blank=True, min=18, max=99)
+    age = models.IntegerField(min=18, max=99)
     gender_sex = models.StringField(
-        blank=True,
         choices=[
             ("female", "Female"),
             ("male", "Male"),
@@ -271,7 +270,6 @@ class Player(BasePlayer):
         ],
     )
     education_level = models.StringField(
-        blank=True,
         choices=[
             ("less_than_high_school", "Less than high school"),
             ("high_school", "High school"),
@@ -283,7 +281,6 @@ class Player(BasePlayer):
         ],
     )
     employment_status = models.StringField(
-        blank=True,
         choices=[
             ("full_time", "Employed full-time"),
             ("full_time_student", "Employed full-time, Student"),
@@ -296,7 +293,6 @@ class Player(BasePlayer):
         ],
     )
     student_level = models.StringField(
-        blank=True,
         choices=[
             ("none", "Not currently a student"),
             ("high_school", "High school"),
@@ -307,7 +303,6 @@ class Player(BasePlayer):
         ],
     )
     field_of_study = models.StringField(
-        blank=True,
         choices=[
             ("economics_business", "Economics / Business"),
             ("law", "Law"),
@@ -326,31 +321,42 @@ class Player(BasePlayer):
         ],
     )
     self_altruism = models.IntegerField(
-        blank=True,
-        min=1,
-        max=6,
-        label="How altruistic do you consider yourself to be?",
-        choices=[[i, str(i)] for i in range(1, 7)],
-        widget=widgets.RadioSelect,
+    label="How altruistic do you consider yourself to be?",
+    choices=[
+        [1, "Not at all altruistic"],
+        [2, "Slightly altruistic"],
+        [3, "Somewhat altruistic"],
+        [4, "Moderately altruistic"],
+        [5, "Very altruistic"],
+        [6, "Extremely altruistic"],
+    ],
+    widget=widgets.RadioSelect,
     )
     donate_frequency = models.IntegerField(
-        blank=True,
-        min=1,
-        max=6,
-        label="How often do you donate to charity?",
-        choices=[[i, str(i)] for i in range(1, 7)],
+    label="In the past 12 months, approximately how many times have you donated money to charity or a nonprofit organization?",
+    choices=[
+        [1, "0 times"],
+        [2, "1 time"],
+        [3, "2–3 times"],
+        [4, "4–6 times"],
+        [5, "7–11 times"],
+        [6, "12 or more times"],
+    ],
         widget=widgets.RadioSelect,
     )
     task_difficulty = models.IntegerField(
-        blank=True,
-        min=1,
-        max=6,
-        label="How difficult did you find the symbol task in this experiment?",
-        choices=[[i, str(i)] for i in range(1, 7)],
-        widget=widgets.RadioSelect,
+    label="How difficult did you find the symbol task in this experiment?",
+    choices=[
+        [1, "Very easy"],
+        [2, "Easy"],
+        [3, "Somewhat easy"],
+        [4, "Somewhat difficult"],
+        [5, "Difficult"],
+        [6, "Very difficult"],
+    ],
+    widget=widgets.RadioSelect,
     )
     study_purpose = models.LongStringField(
-        blank=True,
         label="What do you think this study was about? (max. 50 words)",
     )
 
@@ -489,8 +495,8 @@ class NoConsent(Page):
 
     @staticmethod
     def vars_for_template(player: Player):
-        participation_fee = player.session.config.get("participation_fee", 5.00)
-        return dict(participation_fee=f"{float(participation_fee):.2f}")
+        player.participant.payoff = cu(0)
+        return dict()
 
 
 class Introduction(Page):
@@ -988,46 +994,97 @@ class ComprehensionFailNotice(Page):
     @staticmethod
     def vars_for_template(player: Player):
         pvars = player.participant.vars
-        wrong_fields = pvars.get("comp1_wrong_fields", [])
-        explanations = {
-            "comp1_q1": dict(
+        wrong_fields = set(pvars.get("comp1_wrong_fields", []))
+
+        # Human-readable labels for each answer value
+        choice_labels = {
+            "comp1_q1": {
+                "true_scenario": "The true active scenario, Scenario O",
+                "reported_scenario": "The scenario I reported, Scenario I",
+            },
+            "comp1_q2": {
+                "scenario_o": "Scenario O",
+                "scenario_i": "Scenario I",
+            },
+            "comp1_q3": {
+                "scenario_i": "Scenario I",
+                "scenario_o": "Scenario O",
+            },
+            "comp1_q4": {
+                "action_a_always_better": "Action A always gives me more than Action B, regardless of which scenario is active.",
+                "depends_on_scenario": "Which action gives me more depends on which scenario is active.",
+                "action_b_always_better": "Action B always gives me more than Action A, regardless of which scenario is active.",
+            },
+            "comp1_q5": {
+                "charity_a_both": "Action A, in both scenarios",
+                "charity_b_both": "Action B, in both scenarios",
+                "charity_depends_scenario": "It depends on which scenario is active",
+            },
+        }
+
+        meta = [
+            dict(
+                field="comp1_q1",
                 number=1,
                 question="If the true active scenario is Scenario O but you mistakenly report Scenario I, which scenario is used to calculate payoffs?",
+                correct_value="true_scenario",
                 correct="The true active scenario, Scenario O",
                 explanation="Your report does not change which scenario is active. Payoffs are always determined by the TRUE active scenario — the one set by the actual grid majority — regardless of what you report.",
             ),
-            "comp1_q2": dict(
+            dict(
+                field="comp1_q2",
                 number=2,
                 question="If there are more O symbols on the grid, which scenario is the true active scenario?",
+                correct_value="scenario_o",
                 correct="Scenario O",
                 explanation="The symbol that appears more often in the grid determines the active scenario. More O symbols → Scenario O is active.",
             ),
-            "comp1_q3": dict(
+            dict(
+                field="comp1_q3",
                 number=3,
                 question="If there are more I symbols on the grid, which scenario is the true active scenario?",
+                correct_value="scenario_i",
                 correct="Scenario I",
                 explanation="More I symbols → Scenario I is active.",
             ),
-            "comp1_q4": dict(
+            dict(
+                field="comp1_q4",
                 number=4,
                 question="Which statement is true about your own payoff across the two scenarios?",
+                correct_value="action_a_always_better",
                 correct="Action A always gives me more than Action B, regardless of which scenario is active.",
                 explanation="Your personal payoff depends only on the action you choose, not on which scenario is active. Action A always gives you €7 and Action B always gives you €5 in BOTH scenarios. The scenario only affects what the charity receives.",
             ),
-            "comp1_q5": dict(
+            dict(
+                field="comp1_q5",
                 number=5,
                 question="Across the two scenarios, which action gives the charity more?",
+                correct_value="charity_depends_scenario",
                 correct="It depends on which scenario is active",
                 explanation="The charity's payoff from each action is not the same across both scenarios. Please review the payoff tables above carefully and compare what the charity receives from Action A and Action B in Scenario O versus Scenario I.",
             ),
-        }
-        wrong_items = [explanations[f] for f in wrong_fields if f in explanations]
+        ]
+
+        all_items = []
+        for m in meta:
+            participant_value = getattr(player, m["field"], None) or ""
+            participant_answer = choice_labels[m["field"]].get(participant_value, participant_value)
+            is_correct = m["field"] not in wrong_fields
+            all_items.append(dict(
+                number=m["number"],
+                question=m["question"],
+                participant_answer=participant_answer,
+                is_correct=is_correct,
+                correct=m["correct"],
+                explanation=m["explanation"],
+            ))
+
         moral_symbol = pvars.get("moral_symbol", "O")
         payoffs = Constants.payoffs
         payoffs_x = payoffs["moral_conflict"] if moral_symbol == "O" else payoffs["win_win"]
         payoffs_o = payoffs["win_win"] if moral_symbol == "O" else payoffs["moral_conflict"]
         return dict(
-            wrong_items=wrong_items,
+            all_items=all_items,
             payoffs_x=payoffs_x,
             payoffs_o=payoffs_o,
             identification_bonus=Constants.identification_bonus,

@@ -39,3 +39,9 @@ button[type="submit"].btn-primary:hover {
     background-color: #2980b9;
     border-color: #2471a3;
 }
+
+/* Hide "Powered by oTree" footer */
+footer,
+.otree-footer {
+    display: none !important;
+}
