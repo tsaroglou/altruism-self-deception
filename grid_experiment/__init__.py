@@ -345,7 +345,7 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
     task_difficulty = models.IntegerField(
-    label="How would you rate the difficulty level ofthe symbol task in this experiment?",
+    label="How would you rate the difficulty level of the symbol task in this experiment?",
     choices=[
         [1, "Very easy"],
         [2, "Easy"],
